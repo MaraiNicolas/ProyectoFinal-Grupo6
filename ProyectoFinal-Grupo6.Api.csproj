@@ -9,6 +9,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.14" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Dominio\Entidades\" />
+    <Folder Include="Infraestructura\Database\" />
+    <Folder Include="Funcionalidades\" />
   </ItemGroup>
 
 </Project>

@@ -15,9 +15,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.MapGet("/", () => "API Grupo 6 funcionando!");
-
 app.UseHttpsRedirection();
 
 

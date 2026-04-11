@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="ProyectoFinal-Grupo6.csproj" />
+  <Folder Name="/Backend/">
+    <Project Path="ProyectoFinal-Grupo6.Api.csproj" />
+  </Folder>
 </Solution>

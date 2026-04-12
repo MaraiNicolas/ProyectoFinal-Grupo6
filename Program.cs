@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
+using ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,12 +16,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(
-    options => options.SwaggerDoc("V1", new OpenApiInfo
+    options => options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Proyecto Final - Grupo 6 API",
         Version = "v1"
     })
 );
+builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();
 
 

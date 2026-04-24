@@ -22,10 +22,18 @@ builder.Services.AddSwaggerGen(
         Version = "v1"
     })
 );
+builder.Services.AddCors(options =>
+    options.AddPolicy("AllowReact", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    })
+);
 builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();
 
-
+app.UseCors("AllowReact");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

@@ -233,12 +233,7 @@ function App() {
                 <span></span>
               </button>
 
-              {isSidebarExpanded ? (
-                <>
-                  <span className="sidenav-kicker">Navegacion</span>
-                  <h2>Panel principal</h2>
-                </>
-              ) : null}
+
             </div>
 
             <nav className="sidenav-nav">

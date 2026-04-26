@@ -1,120 +1,114 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 
+const modules = [
+  {
+    title: 'Visitantes',
+    description: 'Alta, consulta y seguimiento de ingresos de visitantes.',
+  },
+  {
+    title: 'Usuarios',
+    description: 'Administracion de cuentas, perfiles y accesos del sistema.',
+  },
+  {
+    title: 'Reportes',
+    description: 'Resumenes operativos y metricas clave para la gestion.',
+  },
+  {
+    title: 'Recursos',
+    description: 'Control y disponibilidad de espacios, equipos y materiales.',
+  },
+]
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    setIsLoggedIn(true)
+  }
+
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+    setPassword('')
+  }
+
+  const userName = email.trim() ? email.split('@')[0] : 'Usuario'
+
+  if (isLoggedIn) {
+    return (
+      <main className="dashboard-shell">
+        <header className="navbar">
+
+          <div className="navbar-actions">
+            <span className="navbar-user">{userName}</span>
+            <button type="button" className="logout-button" onClick={handleLogout}>
+              Cerrar sesion
+            </button>
+          </div>
+        </header>
+
+        <section className="dashboard-content">
+          <div className="dashboard-copy">
+            <h1>Modulos del sistema</h1>
+            <p>Selecciona el modulo que queres administrar.</p>
+          </div>
+
+          <div className="cards-grid">
+            {modules.map((module) => (
+              <article key={module.title} className="module-card">
+                <h2>{module.title}</h2>
+                <p>{module.description}</p>
+                <button type="button" className="module-button">
+                  Ingresar
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      </main>
+    )
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
+    <main className="login-shell">
+      <section className="login-panel">
+        <div className="login-copy">
+          <h1>Iniciar sesión</h1>
           <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+            Accedé con tu correo y contraseña para entrar al sistema.
           </p>
         </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+
+        <form className="login-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span>Correo</span>
+            <input
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </label>
+
+          <label className="field">
+            <span>Contraseña</span>
+            <input
+              type="password"
+              placeholder="********"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </label>
+
+          <button type="submit" className="login-button">
+            Entrar
+          </button>
+        </form>
       </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </main>
   )
 }
 

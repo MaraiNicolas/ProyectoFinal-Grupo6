@@ -103,11 +103,17 @@
 
 .app-shell {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
   min-height: 100vh;
 }
 
 .sidenav {
+  position: fixed;
+  top: 53px;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -219,18 +225,23 @@
 }
 
 .navbar {
+  grid-column: 1 / -1;
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin: 0 auto 32px;
-  padding: 20px 24px;
-  width: min(1200px, 100%);
-  border-radius: 24px;
+  margin: 0;
+  padding: 10px 24px;
+  width: 100%;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(20, 31, 56, 0.12);
   box-shadow: 0 20px 45px rgba(18, 38, 63, 0.12);
   backdrop-filter: blur(14px);
+  box-sizing: border-box;
 }
 
 .navbar-brand {
@@ -243,11 +254,7 @@
   text-align: left;
 }
 
-.navbar-subtitle {
-  margin-top: 6px;
-  color: var(--muted);
-  text-align: left;
-}
+
 
 .navbar-actions {
   display: flex;

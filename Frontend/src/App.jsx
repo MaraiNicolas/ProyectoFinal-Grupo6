@@ -276,23 +276,18 @@ function App() {
           </aside>
         ) : null}
 
+        <header className="navbar">
+          <span className="navbar-brand">Sistema de gestion</span>
+
+          <div className="navbar-actions">
+            <span className="navbar-user">{userName}</span>
+            <button type="button" className="logout-button" onClick={handleLogout}>
+              Cerrar sesion
+            </button>
+          </div>
+        </header>
+
         <div className="main-panel">
-          <header className="navbar">
-            <div>
-              <span className="navbar-brand">Sistema de gestion</span>
-              <p className="navbar-subtitle">
-                {activeView === 'home' ? 'Dashboard general' : `Modulo ${activeView}`}
-              </p>
-            </div>
-
-            <div className="navbar-actions">
-              <span className="navbar-user">{userName}</span>
-              <button type="button" className="logout-button" onClick={handleLogout}>
-                Cerrar sesion
-              </button>
-            </div>
-          </header>
-
           {renderContent()}
         </div>
       </main>

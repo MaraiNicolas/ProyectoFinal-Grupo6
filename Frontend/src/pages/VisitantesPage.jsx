@@ -1,4 +1,5 @@
 import { useVisitorFilters } from '../hooks/useVisitorFilters'
+import { VisitorActionsMenu } from '../components/VisitorActionsMenu'
 
 export function VisitantesPage() {
   const { filters, filteredVisitors, handleFilterChange } = useVisitorFilters()
@@ -65,6 +66,7 @@ export function VisitantesPage() {
               <th>Apellido</th>
               <th>Mail</th>
               <th>DNI</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -74,6 +76,11 @@ export function VisitantesPage() {
                 <td>{visitor.apellido}</td>
                 <td>{visitor.mail}</td>
                 <td>{visitor.dni}</td>
+                <td className="visitor-actions-cell">
+                  <VisitorActionsMenu
+                    visitorName={`${visitor.nombre} ${visitor.apellido}`}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

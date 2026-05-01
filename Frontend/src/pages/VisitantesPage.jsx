@@ -8,7 +8,6 @@ export function VisitantesPage() {
       <div className="content-header">
         <div className="dashboard-copy">
           <h1>Visitantes registrados</h1>
-          <p>Consulta y filtra los visitantes cargados en el sistema.</p>
         </div>
 
         <button type="button" className="primary-action-button">

@@ -284,10 +284,14 @@
 
 .content-header {
   display: flex;
-  align-items: end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
   margin-bottom: 24px;
+}
+
+.content-header .dashboard-copy {
+  margin-bottom: 0;
 }
 
 .dashboard-copy {

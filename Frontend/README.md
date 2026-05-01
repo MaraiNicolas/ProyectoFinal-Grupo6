@@ -1,16 +1,46 @@
-# React + Vite
+# Frontend - ProyectoFinal-Grupo6
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Descripcion
+Aplicacion web en React para gestionar modulos del sistema, incluyendo login local, dashboard y gestion de visitantes.
 
-Currently, two official plugins are available:
+## Stack
+- React 19
+- Vite 8
+- CSS tradicional (sin framework)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Requisitos
+- Node.js 20 o superior
+- npm
 
-## React Compiler
+## Ejecucion local
+Desde la carpeta Frontend:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+La aplicacion queda disponible normalmente en:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- http://localhost:5173
+
+## Scripts
+- npm run dev: inicia entorno de desarrollo
+- npm run build: genera build de produccion
+- npm run preview: sirve build generado localmente
+- npm run lint: ejecuta linting
+
+## Funcionalidades implementadas
+- Pantalla de login local
+- Dashboard con modulos
+- Sidebar contraible
+- Grilla de visitantes con filtros por nombre, apellido, mail y DNI
+- Columna de acciones por visitante con menu de elipsis
+- Alta de visitante en vista dedicada
+- Snackbar de confirmacion al crear visitante
+
+## Estructura principal
+- src/components/: componentes reutilizables de UI
+- src/pages/: vistas principales
+- src/hooks/: logica de estado y filtros
+- src/data/: datos iniciales mock

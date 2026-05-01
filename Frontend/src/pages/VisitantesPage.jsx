@@ -1,8 +1,8 @@
 import { useVisitorFilters } from '../hooks/useVisitorFilters'
 import { VisitorActionsMenu } from '../components/VisitorActionsMenu'
 
-export function VisitantesPage() {
-  const { filters, filteredVisitors, handleFilterChange } = useVisitorFilters()
+export function VisitantesPage({ visitors, onCreateVisitor }) {
+  const { filters, filteredVisitors, handleFilterChange } = useVisitorFilters(visitors)
 
   return (
     <section className="dashboard-content visitors-view">
@@ -11,7 +11,7 @@ export function VisitantesPage() {
           <h1>Visitantes registrados</h1>
         </div>
 
-        <button type="button" className="primary-action-button">
+        <button type="button" className="primary-action-button" onClick={onCreateVisitor}>
           Nuevo visitante
         </button>
       </div>
@@ -62,6 +62,7 @@ export function VisitantesPage() {
         <table className="visitors-table">
           <thead>
             <tr>
+              <th>ID</th>
               <th>Nombre</th>
               <th>Apellido</th>
               <th>Mail</th>
@@ -72,6 +73,7 @@ export function VisitantesPage() {
           <tbody>
             {filteredVisitors.map((visitor) => (
               <tr key={visitor.id}>
+                <td>{visitor.id}</td>
                 <td>{visitor.nombre}</td>
                 <td>{visitor.apellido}</td>
                 <td>{visitor.mail}</td>

@@ -358,6 +358,33 @@
   cursor: pointer;
 }
 
+.secondary-action-button {
+  border: 1px solid rgba(20, 31, 56, 0.2);
+  border-radius: 14px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.visitor-form-panel {
+  max-width: 760px;
+}
+
+.visitor-form {
+  display: grid;
+  gap: 16px;
+}
+
+.visitor-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 4px;
+}
+
 .filters-panel,
 .table-panel {
   padding: 24px;
@@ -476,6 +503,19 @@
   color: var(--muted);
 }
 
+.app-snackbar {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #1f7a3d;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 14px 24px rgba(12, 32, 23, 0.28);
+}
+
 @media (max-width: 1024px) {
   .login-shell {
     padding: 20px;
@@ -567,8 +607,20 @@
 
   .module-button,
   .primary-action-button,
+  .secondary-action-button,
   .logout-button {
     width: 100%;
+  }
+
+  .visitor-form-actions {
+    flex-direction: column;
+  }
+
+  .app-snackbar {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    text-align: center;
   }
 
   .table-panel {

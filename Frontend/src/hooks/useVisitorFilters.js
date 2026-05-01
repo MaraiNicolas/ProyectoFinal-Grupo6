@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { visitors } from "../data/visitors";
 
-export function useVisitorFilters() {
+export function useVisitorFilters(visitors) {
   const [filters, setFilters] = useState({
     nombre: "",
     apellido: "",

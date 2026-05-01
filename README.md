@@ -49,6 +49,7 @@ npm run dev
 ## Estado funcional actual
 
 - Login local
+- Persistencia de login en localStorage
 - Dashboard de modulos
 - Sidebar contraible
 - Grilla de visitantes con filtros

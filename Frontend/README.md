@@ -38,6 +38,7 @@ La aplicacion queda disponible normalmente en:
 ## Funcionalidades implementadas
 
 - Pantalla de login local
+- Persistencia de sesion de login en localStorage
 - Dashboard con modulos
 - Sidebar contraible
 - Grilla de visitantes con filtros por nombre, apellido, mail y DNI

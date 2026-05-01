@@ -7,7 +7,6 @@ export function VisitantesPage() {
     <section className="dashboard-content visitors-view">
       <div className="content-header">
         <div className="dashboard-copy">
-          <span className="dashboard-badge">Visitantes</span>
           <h1>Visitantes registrados</h1>
           <p>Consulta y filtra los visitantes cargados en el sistema.</p>
         </div>

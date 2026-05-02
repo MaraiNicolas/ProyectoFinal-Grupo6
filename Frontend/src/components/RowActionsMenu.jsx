@@ -47,7 +47,10 @@ export function RowActionsMenu({ label, actions }) {
 
     const handlePointerDown = (event) => {
       const root = rootRef.current
-      if (!root || root.contains(event.target)) return
+      const dropdown = dropdownRef.current
+      if (!root) return
+      if (root.contains(event.target)) return
+      if (dropdown?.contains(event.target)) return
       setIsOpen(false)
     }
 

@@ -67,7 +67,6 @@ export function VisitantesPage({ visitors, onCreateVisitor }) {
               <th>Apellido</th>
               <th>Mail</th>
               <th>DNI</th>
-              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>

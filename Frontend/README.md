@@ -45,6 +45,7 @@ La aplicacion queda disponible normalmente en:
 - Columna de acciones por visitante con menu de elipsis
 - Grilla reutilizable configurable por columnas y acciones
 - Alta de visitante en vista dedicada
+- Edicion de visitante con formulario precargado
 - Snackbar de confirmacion al crear visitante
 - Eliminacion de visitante con modal de confirmacion y snackbar de exito
 

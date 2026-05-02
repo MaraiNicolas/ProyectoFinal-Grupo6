@@ -1,12 +1,20 @@
 import { useState } from 'react'
 
-export function NuevoVisitantePage({ onSave, onCancel }) {
-  const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
-    mail: '',
-    dni: '',
-  })
+const buildInitialForm = (initialData) => ({
+  nombre: initialData?.nombre ?? '',
+  apellido: initialData?.apellido ?? '',
+  mail: initialData?.mail ?? '',
+  dni: initialData?.dni ?? '',
+})
+
+export function NuevoVisitantePage({
+  initialData,
+  title = 'Nuevo visitante',
+  submitLabel = 'Guardar',
+  onSave,
+  onCancel,
+}) {
+  const [formData, setFormData] = useState(() => buildInitialForm(initialData))
 
   const handleChange = (field, value) => {
     setFormData((current) => ({
@@ -29,7 +37,7 @@ export function NuevoVisitantePage({ onSave, onCancel }) {
   return (
     <section className="dashboard-content">
       <div className="dashboard-copy">
-        <h1>Nuevo visitante</h1>
+        <h1>{title}</h1>
       </div>
 
       <section className="table-panel visitor-form-panel">
@@ -83,7 +91,7 @@ export function NuevoVisitantePage({ onSave, onCancel }) {
               Cancelar
             </button>
             <button type="submit" className="primary-action-button">
-              Guardar
+              {submitLabel}
             </button>
           </div>
         </form>

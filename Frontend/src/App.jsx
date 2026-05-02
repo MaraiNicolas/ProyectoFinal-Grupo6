@@ -14,7 +14,9 @@ function App() {
   const [activeView, setActiveView] = useState('home')
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false)
   const [visitors, setVisitors] = useState(initialVisitors)
+  const [visitorToEditId, setVisitorToEditId] = useState(null)
   const [snackbarMessage, setSnackbarMessage] = useState('')
+  const visitorToEdit = visitors.find((visitor) => visitor.id === visitorToEditId) ?? null
 
   useEffect(() => {
     if (!snackbarMessage) return undefined
@@ -56,8 +58,28 @@ function App() {
     setSnackbarMessage('Creado exitosamente.')
   }
 
+  const handleStartEditVisitor = (visitorId) => {
+    setVisitorToEditId(visitorId)
+    setActiveView('editar-visitante')
+  }
+
+  const handleUpdateVisitor = (updatedVisitorData) => {
+    if (!visitorToEditId) return
+
+    setVisitors((current) => current.map((visitor) => (
+      visitor.id === visitorToEditId
+        ? { ...visitor, ...updatedVisitorData }
+        : visitor
+    )))
+
+    setVisitorToEditId(null)
+    setActiveView('visitantes')
+    setSnackbarMessage('Modificado exitosamente.')
+  }
+
   const handleDeleteVisitor = (visitorId) => {
     setVisitors((current) => current.filter((visitor) => visitor.id !== visitorId))
+    if (visitorToEditId === visitorId) setVisitorToEditId(null)
     setSnackbarMessage('Eliminado exitosamente.')
   }
 
@@ -71,6 +93,7 @@ function App() {
         <VisitantesPage
           visitors={visitors}
           onCreateVisitor={() => handleNavigate('nuevo-visitante')}
+          onEditVisitor={handleStartEditVisitor}
           onDeleteVisitor={handleDeleteVisitor}
         />
       )
@@ -81,6 +104,33 @@ function App() {
         <NuevoVisitantePage
           onSave={handleCreateVisitor}
           onCancel={() => handleNavigate('visitantes')}
+        />
+      )
+    }
+
+    if (activeView === 'editar-visitante' && visitorToEdit) {
+      return (
+        <NuevoVisitantePage
+          key={`edit-${visitorToEdit.id}`}
+          initialData={visitorToEdit}
+          title="Modificar visitante"
+          submitLabel="Guardar cambios"
+          onSave={handleUpdateVisitor}
+          onCancel={() => {
+            setVisitorToEditId(null)
+            handleNavigate('visitantes')
+          }}
+        />
+      )
+    }
+
+    if (activeView === 'editar-visitante' && !visitorToEdit) {
+      return (
+        <VisitantesPage
+          visitors={visitors}
+          onCreateVisitor={() => handleNavigate('nuevo-visitante')}
+          onEditVisitor={handleStartEditVisitor}
+          onDeleteVisitor={handleDeleteVisitor}
         />
       )
     }

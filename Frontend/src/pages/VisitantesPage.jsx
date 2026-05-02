@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { useVisitorFilters } from '../hooks/useVisitorFilters'
 import { DataGrid } from '../components/DataGrid'
 
-export function VisitantesPage({ visitors, onCreateVisitor, onDeleteVisitor }) {
+export function VisitantesPage({
+  visitors,
+  onCreateVisitor,
+  onEditVisitor,
+  onDeleteVisitor,
+}) {
   const { filters, filteredVisitors, handleFilterChange } = useVisitorFilters(visitors)
   const [visitorToDelete, setVisitorToDelete] = useState(null)
   const columns = [
@@ -80,7 +85,7 @@ export function VisitantesPage({ visitors, onCreateVisitor, onDeleteVisitor }) {
           rowKey="id"
           actions={(visitor) => [
             { label: 'Invitar', onClick: () => {} },
-            { label: 'Modificar', onClick: () => {} },
+            { label: 'Modificar', onClick: () => onEditVisitor(visitor.id) },
             {
               label: 'Eliminar',
               onClick: () => setVisitorToDelete(visitor),

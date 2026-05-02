@@ -1,8 +1,23 @@
+import { useState } from 'react'
 import { useVisitorFilters } from '../hooks/useVisitorFilters'
-import { VisitorActionsMenu } from '../components/VisitorActionsMenu'
+import { DataGrid } from '../components/DataGrid'
 
-export function VisitantesPage({ visitors, onCreateVisitor }) {
+export function VisitantesPage({ visitors, onCreateVisitor, onDeleteVisitor }) {
   const { filters, filteredVisitors, handleFilterChange } = useVisitorFilters(visitors)
+  const [visitorToDelete, setVisitorToDelete] = useState(null)
+  const columns = [
+    { key: 'id', label: 'ID' },
+    { key: 'nombre', label: 'Nombre' },
+    { key: 'apellido', label: 'Apellido' },
+    { key: 'mail', label: 'Mail' },
+    { key: 'dni', label: 'DNI' },
+  ]
+
+  const handleConfirmDelete = () => {
+    if (!visitorToDelete) return
+    onDeleteVisitor(visitorToDelete.id)
+    setVisitorToDelete(null)
+  }
 
   return (
     <section className="dashboard-content visitors-view">
@@ -59,38 +74,59 @@ export function VisitantesPage({ visitors, onCreateVisitor }) {
       </section>
 
       <section className="table-panel">
-        <table className="visitors-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Mail</th>
-              <th>DNI</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredVisitors.map((visitor) => (
-              <tr key={visitor.id}>
-                <td>{visitor.id}</td>
-                <td>{visitor.nombre}</td>
-                <td>{visitor.apellido}</td>
-                <td>{visitor.mail}</td>
-                <td>{visitor.dni}</td>
-                <td className="visitor-actions-cell">
-                  <VisitorActionsMenu
-                    visitorName={`${visitor.nombre} ${visitor.apellido}`}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredVisitors.length === 0 ? (
-          <p className="empty-state">No se encontraron visitantes con esos filtros.</p>
-        ) : null}
+        <DataGrid
+          columns={columns}
+          rows={filteredVisitors}
+          rowKey="id"
+          actions={(visitor) => [
+            { label: 'Invitar', onClick: () => {} },
+            { label: 'Modificar', onClick: () => {} },
+            {
+              label: 'Eliminar',
+              onClick: () => setVisitorToDelete(visitor),
+              danger: true,
+            },
+          ]}
+          emptyMessage="No se encontraron visitantes con esos filtros."
+        />
       </section>
+
+      {visitorToDelete ? (
+        <div className="confirm-overlay" onClick={() => setVisitorToDelete(null)}>
+          <section
+            className="confirm-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-visitor-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="delete-visitor-title">Eliminar registro</h2>
+            <p>
+              Estas seguro que deseas eliminar a
+              {' '}
+              <strong>{visitorToDelete.nombre} {visitorToDelete.apellido}</strong>
+              ?
+            </p>
+
+            <div className="confirm-actions">
+              <button
+                type="button"
+                className="secondary-action-button"
+                onClick={() => setVisitorToDelete(null)}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                className="danger-action-button"
+                onClick={handleConfirmDelete}
+              >
+                Si, eliminar
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   )
 }

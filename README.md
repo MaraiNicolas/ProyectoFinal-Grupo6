@@ -53,8 +53,10 @@ npm run dev
 - Dashboard de modulos
 - Sidebar contraible
 - Grilla de visitantes con filtros
+- Componente de grilla reutilizable para distintas vistas
 - Alta de visitante con redireccion a grilla
 - Snackbar de confirmacion de alta
+- Eliminacion de visitante con confirmacion y mensaje de exito
 - Menu de acciones por visitante (elipsis)
 
 ## Notas

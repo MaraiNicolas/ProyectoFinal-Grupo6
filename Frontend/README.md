@@ -43,8 +43,10 @@ La aplicacion queda disponible normalmente en:
 - Sidebar contraible
 - Grilla de visitantes con filtros por nombre, apellido, mail y DNI
 - Columna de acciones por visitante con menu de elipsis
+- Grilla reutilizable configurable por columnas y acciones
 - Alta de visitante en vista dedicada
 - Snackbar de confirmacion al crear visitante
+- Eliminacion de visitante con modal de confirmacion y snackbar de exito
 
 ## Estructura principal
 

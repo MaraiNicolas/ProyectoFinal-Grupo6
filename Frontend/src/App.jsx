@@ -56,6 +56,11 @@ function App() {
     setSnackbarMessage('Creado exitosamente.')
   }
 
+  const handleDeleteVisitor = (visitorId) => {
+    setVisitors((current) => current.filter((visitor) => visitor.id !== visitorId))
+    setSnackbarMessage('Eliminado exitosamente.')
+  }
+
   if (!auth.isLoggedIn) {
     return <LoginPage auth={auth} />
   }
@@ -66,6 +71,7 @@ function App() {
         <VisitantesPage
           visitors={visitors}
           onCreateVisitor={() => handleNavigate('nuevo-visitante')}
+          onDeleteVisitor={handleDeleteVisitor}
         />
       )
     }

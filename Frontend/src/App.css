@@ -386,6 +386,17 @@
   cursor: pointer;
 }
 
+.danger-action-button {
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  background: #c02828;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .visitor-form-panel {
   max-width: 760px;
   margin: 0 auto;
@@ -526,6 +537,43 @@
   color: var(--muted);
 }
 
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  background: rgba(9, 18, 31, 0.36);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-modal {
+  width: min(460px, calc(100% - 32px));
+  padding: 24px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(20, 31, 56, 0.14);
+  box-shadow: 0 20px 40px rgba(14, 24, 39, 0.28);
+}
+
+.confirm-modal h2 {
+  margin: 0 0 12px;
+  font-size: 1.4rem;
+}
+
+.confirm-modal p {
+  margin: 0;
+  color: var(--text);
+  text-align: left;
+}
+
+.confirm-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .app-snackbar {
   position: fixed;
   right: 24px;
@@ -631,11 +679,16 @@
   .module-button,
   .primary-action-button,
   .secondary-action-button,
+  .danger-action-button,
   .logout-button {
     width: 100%;
   }
 
   .visitor-form-actions {
+    flex-direction: column;
+  }
+
+  .confirm-actions {
     flex-direction: column;
   }
 

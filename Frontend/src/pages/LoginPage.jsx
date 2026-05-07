@@ -30,6 +30,10 @@ export function LoginPage({ auth }) {
             />
           </label>
 
+          <div className="forgot-password">
+            <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
+          </div>
+
           <button type="submit" className="login-button">
             Entrar
           </button>

@@ -10,9 +10,9 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Repositorios.UnitOfWork
         {
             _dbContext = dbContext;
         }
-        public Task GuardarCambiosAsync(CancellationToken cancellationToken = default)
+        public async Task GuardarCambiosAsync(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

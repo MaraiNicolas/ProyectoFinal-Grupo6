@@ -1,12 +1,12 @@
 export function LoginPage({ auth }) {
-  const { email, setEmail, password, setPassword, handleSubmit } = auth
+  const { email, setEmail, password, setPassword, handleSubmit, error } = auth
 
   return (
     <main className="login-shell">
       <section className="login-panel">
         <div className="login-copy">
-          <h1>Iniciar sesión</h1>
-          <p>Accedé con tu correo y contraseña para entrar al sistema.</p>
+          <h1>Iniciar sesion</h1>
+          <p>Accede con tu correo y contrasena para entrar al sistema.</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -21,7 +21,7 @@ export function LoginPage({ auth }) {
           </label>
 
           <label className="field">
-            <span>Contraseña</span>
+            <span>Contrasena</span>
             <input
               type="password"
               placeholder="********"
@@ -30,9 +30,7 @@ export function LoginPage({ auth }) {
             />
           </label>
 
-          <div className="forgot-password">
-            <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
-          </div>
+          {error ? <p className="login-error">{error}</p> : null}
 
           <button type="submit" className="login-button">
             Entrar

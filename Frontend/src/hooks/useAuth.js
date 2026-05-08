@@ -1,53 +1,36 @@
-import { useEffect, useState } from "react";
-
-const AUTH_STORAGE_KEY = "grupo6-auth";
-
-const getStoredAuth = () => {
-  if (typeof window === "undefined") {
-    return { email: "", isLoggedIn: false };
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!rawValue) return { email: "", isLoggedIn: false };
-
-    const parsedValue = JSON.parse(rawValue);
-    return {
-      email: typeof parsedValue.email === "string" ? parsedValue.email : "",
-      isLoggedIn: Boolean(parsedValue.isLoggedIn),
-    };
-  } catch {
-    return { email: "", isLoggedIn: false };
-  }
-};
+import { useState } from 'react'
+import * as api from '../services/api'
 
 export function useAuth() {
-  const [email, setEmail] = useState(() => getStoredAuth().email);
-  const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    () => getStoredAuth().isLoggedIn,
-  );
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoggedIn, setIsLoggedIn] = useState(() => api.estaAutenticado())
+  const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const usuario = api.getUsuarioActual()
+  const userName = usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Usuario'
 
-    window.localStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({ email, isLoggedIn }),
-    );
-  }, [email, isLoggedIn]);
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setIsLoggedIn(true);
-  };
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setError('')
+    try {
+      const data = await api.login(email, password)
+      if (data?.token) {
+        setIsLoggedIn(true)
+      } else {
+        setError(data?.mensaje || 'Error al iniciar sesion')
+      }
+    } catch {
+      setError('No se pudo conectar con el servidor')
+    }
+  }
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setPassword("");
-  };
-
-  const userName = email.trim() ? email.split("@")[0] : "Usuario";
+    api.logout()
+    setIsLoggedIn(false)
+    setEmail('')
+    setPassword('')
+  }
 
   return {
     email,
@@ -56,7 +39,8 @@ export function useAuth() {
     setPassword,
     isLoggedIn,
     userName,
+    error,
     handleSubmit,
     handleLogout,
-  };
+  }
 }

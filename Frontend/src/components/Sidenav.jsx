@@ -1,13 +1,23 @@
-import { modules } from '../data/modules'
+import { useState } from 'react'
+import { NavLink } from 'react-router-dom'
 
-export function Sidenav({ activeView, onNavigate, isExpanded, onToggle }) {
+const navItems = [
+  { to: '/', label: 'Hoy', icon: 'H' },
+  { to: '/invitaciones', label: 'Invitaciones', icon: 'I' },
+  { to: '/visitantes', label: 'Visitantes', icon: 'V' },
+  { to: '/admin', label: 'Admin', icon: 'A' },
+]
+
+export function Sidenav() {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   return (
     <aside className={`sidenav ${isExpanded ? 'expanded' : 'collapsed'}`}>
       <div className="sidenav-header">
         <button
           type="button"
           className="sidenav-toggle"
-          onClick={onToggle}
+          onClick={() => setIsExpanded((current) => !current)}
           aria-label={isExpanded ? 'Contraer menu lateral' : 'Expandir menu lateral'}
         >
           <span></span>
@@ -17,33 +27,18 @@ export function Sidenav({ activeView, onNavigate, isExpanded, onToggle }) {
       </div>
 
       <nav className="sidenav-nav">
-        <button
-          type="button"
-          className={`sidenav-link ${activeView === 'home' ? 'active' : ''}`}
-          onClick={() => onNavigate('home')}
-          aria-label="Home"
-        >
-          <span className="sidenav-link-icon">H</span>
-          {isExpanded ? <span>Home</span> : null}
-        </button>
-
-        {modules.map((module) => {
-          const moduleView = module.title.toLowerCase()
-          const shortLabel = module.title.charAt(0)
-
-          return (
-            <button
-              key={module.title}
-              type="button"
-              className={`sidenav-link ${activeView === moduleView ? 'active' : ''}`}
-              onClick={() => onNavigate(moduleView)}
-              aria-label={module.title}
-            >
-              <span className="sidenav-link-icon">{shortLabel}</span>
-              {isExpanded ? <span>{module.title}</span> : null}
-            </button>
-          )
-        })}
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === '/'}
+            className={({ isActive }) => `sidenav-link ${isActive ? 'active' : ''}`}
+            aria-label={item.label}
+          >
+            <span className="sidenav-link-icon">{item.icon}</span>
+            {isExpanded ? <span>{item.label}</span> : null}
+          </NavLink>
+        ))}
       </nav>
     </aside>
   )

@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,8 +33,34 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod();
     })
 );
+builder.Services.AddControllers();
+
+// JWT Authentication (mocked for MVP)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "ProyectoFinal-Grupo6",
+            ValidAudience = "ProyectoFinal-Grupo6",
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("ProyectoFinal-Grupo6-ClaveSecreta-MVP-2026!"))
+        };
+    });
+builder.Services.AddAuthorization();
 builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();
+
+// Seed data for MVP (InMemory DB resets on restart)
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    SeedData.Inicializar(context);
+}
 
 app.UseCors("AllowReact");
 // Configure the HTTP request pipeline.
@@ -42,5 +71,9 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();

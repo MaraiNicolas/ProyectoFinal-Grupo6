@@ -97,7 +97,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 HoraInicio = new TimeSpan(15, 0, 0),
                 HoraFin = new TimeSpan(16, 30, 0),
                 BufferMinutos = 120,
-                Motivo = "Entrevista tecnica",
+                Motivo = "Entrevista",
                 Estado = "Pendiente"
             };
 
@@ -110,7 +110,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 HoraInicio = new TimeSpan(9, 0, 0),
                 HoraFin = new TimeSpan(11, 0, 0),
                 BufferMinutos = 120,
-                Motivo = "Revision de contrato",
+                Motivo = "Entrevista",
                 Estado = "Expirada"
             };
 

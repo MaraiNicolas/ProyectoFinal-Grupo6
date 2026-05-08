@@ -148,7 +148,7 @@ export function NuevaInvitacionPage() {
 
           <label className="field">
             <span>Buffer (minutos)</span>
-            <input type="number" value={form.bufferMinutos} onChange={(e) => handleFormChange('bufferMinutos', parseInt(e.target.value, 10))} />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" value={form.bufferMinutos} onChange={(e) => { const val = e.target.value.replace(/\D/g, ''); handleFormChange('bufferMinutos', val ? parseInt(val, 10) : 0) }} />
           </label>
 
           <label className="field">

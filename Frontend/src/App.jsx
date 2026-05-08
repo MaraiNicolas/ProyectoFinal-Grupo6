@@ -8,6 +8,8 @@ import { DashboardPage } from './pages/DashboardPage'
 import { VisitantesPage } from './pages/VisitantesPage'
 import { NuevoVisitantePage } from './pages/NuevoVisitantePage'
 import { visitors as initialVisitors } from './data/visitors'
+import { scheduledVisits } from './data/scheduledVisits'
+import { VisitasProgramadasPage } from './pages/VisitasProgramadasPage'
 
 function App() {
   const auth = useAuth()
@@ -133,6 +135,10 @@ function App() {
           onDeleteVisitor={handleDeleteVisitor}
         />
       )
+    }
+
+    if (activeView === 'scheduled visits') {
+      return <VisitasProgramadasPage scheduledVisits={scheduledVisits} />
     }
 
     return <DashboardPage onNavigate={handleNavigate} />

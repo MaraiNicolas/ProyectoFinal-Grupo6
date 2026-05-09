@@ -3,6 +3,7 @@ using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.Abstracciones.Rep
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.Abstracciones.SqlConnections;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.UnitOfWork;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
+using ProyectoFinal_Grupo6.Api.Infraestructura.Excepciones;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Repositorios.Abstracciones.RepositorioGenerico;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Repositorios.Abstracciones.SqlConnections;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Repositorios.UnitOfWork;
@@ -22,6 +23,8 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
             services.AddScoped<IUnitOfWork, UnitOfWork>();
            // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddExceptionHandler<GlobalExceptionHandler>();
+            services.AddProblemDetails();
             var repositories = assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Repository") && t.Name != "GenericRepository");
 
             foreach (var repo in repositories)

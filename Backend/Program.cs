@@ -33,6 +33,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 app.UseCors("AllowReact");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

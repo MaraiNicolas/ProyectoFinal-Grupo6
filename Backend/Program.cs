@@ -13,8 +13,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseInMemoryDatabase("Grupo6Db");
 });
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Agregar servicios al contenedor
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -35,7 +34,7 @@ builder.Services.AddCors(options =>
 );
 builder.Services.AddControllers();
 
-// JWT Authentication (mocked for MVP)
+// Autenticacion JWT (mockeada para MVP)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -55,7 +54,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();
 
-// Seed data for MVP (InMemory DB resets on restart)
+// Datos iniciales para MVP (se reinician al reiniciar la app)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -63,7 +62,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("AllowReact");
-// Configure the HTTP request pipeline.
+// Configurar el pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

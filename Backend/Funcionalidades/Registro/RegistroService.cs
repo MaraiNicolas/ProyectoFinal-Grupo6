@@ -9,10 +9,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
     {
         private readonly ApplicationDbContext _context;
         private readonly IHikCentralService _hikCentral;
+        private readonly IAuditLogService _auditLog;
 
-        public RegistroService(ApplicationDbContext context, IHikCentralService hikCentral)
+        public RegistroService(ApplicationDbContext context, IHikCentralService hikCentral, IAuditLogService auditLog)
         {
             _context = context;
+            _auditLog = auditLog;
             _hikCentral = hikCentral;
         }
 
@@ -31,20 +33,20 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
 
             var invitacion = iv.Invitacion!;
 
-            // Check if cancelled
+            // Verificar si fue cancelada
             if (invitacion.Estado == "Cancelada")
                 return BuildResponse(iv, "Cancelada");
 
-            // Check if expired
+            // Verificar si expiro
             var finConBuffer = invitacion.Fecha.Date + invitacion.HoraFin + TimeSpan.FromMinutes(invitacion.BufferMinutos);
             if (DateTime.Now > finConBuffer)
                 return BuildResponse(iv, "Expirada");
 
-            // Check if already completed
+            // Verificar si ya fue completado
             if (iv.EstadoFormulario == "Completado")
                 return BuildResponse(iv, "Completado");
 
-            // Pending — check if visitor already exists (returning visitor)
+            // Pendiente — verificar si el visitante ya existe (visitante recurrente)
             var hikVisitante = await _hikCentral.BuscarVisitantePorEmail(iv.EmailVisitante);
             var response = BuildResponse(iv, "Pendiente");
             response.EsVisitanteExistente = hikVisitante != null;
@@ -75,7 +77,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
 
             var invitacion = iv.Invitacion!;
 
-            // Can't complete if cancelled or expired
+            // No se puede completar si esta cancelada o expirada
             if (invitacion.Estado == "Cancelada")
                 return new RegistroResponse { Estado = "Cancelada" };
 
@@ -83,11 +85,11 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             if (DateTime.Now > finConBuffer)
                 return new RegistroResponse { Estado = "Expirada" };
 
-            // Already completed
+            // Ya completado
             if (iv.EstadoFormulario == "Completado")
                 return BuildResponse(iv, "Completado");
 
-            // Create or update Visitante record
+            // Crear o actualizar registro de Visitante
             var visitante = await _context.Set<Visitante>()
                 .FirstOrDefaultAsync(v => v.Email == iv.EmailVisitante);
 
@@ -106,7 +108,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             }
             else
             {
-                // Update existing visitor info
+                // Actualizar datos del visitante existente
                 visitante.Nombre = request.Nombre;
                 visitante.Apellido = request.Apellido;
                 visitante.Telefono = request.Telefono;
@@ -114,7 +116,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
                 visitante.NumeroDocumento = request.NumeroDocumento;
             }
 
-            // Update InvitacionVisitante
+            // Actualizar InvitacionVisitante
             iv.VisitanteId = visitante.Guid;
             iv.EstadoFormulario = "Completado";
             iv.FechaCompletado = DateTime.UtcNow;
@@ -144,30 +146,19 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             var hikResponse = await _hikCentral.CrearReserva(hikRequest);
             iv.HikCentralReservationId = hikResponse.ReservationId;
 
-            // Update invitation estado if this is the first completed visitor
+            // Actualizar estado de la invitacion si es el primer visitante en completar
             if (invitacion.Estado == "Pendiente")
                 invitacion.Estado = "Activa";
 
-            // Audit logs
-            _context.Set<AuditLog>().AddRange(
-                new AuditLog
-                {
-                    EventType = "FORM_COMPLETED",
-                    VisitanteId = visitante.Guid,
-                    InvitacionId = invitacion.Guid
-                },
-                new AuditLog
-                {
-                    EventType = "RESERVATION_CREATED",
-                    VisitanteId = visitante.Guid,
-                    InvitacionId = invitacion.Guid,
-                    Metadata = $"{{\"hikCentralReservationId\": \"{iv.HikCentralReservationId}\"}}"
-                }
-            );
-
             await _context.SaveChangesAsync();
 
-            // Reload with navigation properties
+            // Registrar eventos de auditoria
+            await _auditLog.RegistrarEvento("FORM_COMPLETED", visitanteId: visitante.Guid, invitacionId: invitacion.Guid);
+            await _auditLog.RegistrarEvento("RESERVATION_CREATED", visitanteId: visitante.Guid, invitacionId: invitacion.Guid,
+                metadata: $"{{\"hikCentralReservationId\": \"{iv.HikCentralReservationId}\"}}");
+
+
+            // Recargar con propiedades de navegacion
             iv = await _context.Set<InvitacionVisitante>()
                 .Include(x => x.Invitacion)
                     .ThenInclude(i => i!.Destino)
@@ -206,7 +197,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
         }
     }
 
-    // Request / Response DTOs
+    // DTOs de request / response
     public class CompletarRegistroRequest
     {
         public string Nombre { get; set; } = string.Empty;

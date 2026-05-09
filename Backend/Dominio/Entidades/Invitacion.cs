@@ -19,7 +19,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Entidades
         public string? Motivo { get; set; }
         public string Estado { get; set; } = "Pendiente";
 
-        // Navigation properties
+        // Propiedades de navegacion
         public Usuario? Usuario { get; set; }
         public Destino? Destino { get; set; }
         public List<InvitacionVisitante> Visitantes { get; set; } = new();

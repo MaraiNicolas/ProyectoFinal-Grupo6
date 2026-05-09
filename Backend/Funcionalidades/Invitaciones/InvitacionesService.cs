@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProyectoFinal_Grupo6.Api.Dominio.Entidades;
+using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 
 namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
@@ -7,10 +8,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
     public class InvitacionesService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _auditLog;
 
-        public InvitacionesService(ApplicationDbContext context)
+        public InvitacionesService(ApplicationDbContext context, IAuditLogService auditLog)
         {
             _context = context;
+            _auditLog = auditLog;
         }
 
         public async Task<Invitacion> CrearInvitacion(CrearInvitacionRequest request, Guid usuarioId)
@@ -39,16 +42,10 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             }
 
             _context.Set<Invitacion>().Add(invitacion);
-
-            // Audit log
-            _context.Set<AuditLog>().Add(new AuditLog
-            {
-                EventType = "INVITATION_CREATED",
-                UsuarioId = usuarioId,
-                InvitacionId = invitacion.Guid
-            });
-
             await _context.SaveChangesAsync();
+
+            await _auditLog.RegistrarEvento("INVITATION_CREATED", usuarioId, invitacionId: invitacion.Guid);
+
             return invitacion;
         }
 
@@ -86,21 +83,15 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                 return null;
 
             invitacion.Estado = "Cancelada";
-
-            // Audit log
-            _context.Set<AuditLog>().Add(new AuditLog
-            {
-                EventType = "INVITATION_CANCELLED",
-                UsuarioId = usuarioId,
-                InvitacionId = invitacion.Guid
-            });
-
             await _context.SaveChangesAsync();
+
+            await _auditLog.RegistrarEvento("INVITATION_CANCELLED", usuarioId, invitacionId: invitacion.Guid);
+
             return invitacion;
         }
     }
 
-    // Request DTOs
+    // DTOs de request
     public class CrearInvitacionRequest
     {
         public Guid DestinoId { get; set; }

@@ -111,7 +111,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
             return Convert.ToBase64String(hash);
         }
 
-        // Port of Python call_api() function
+        // Creación De Signature
         private async Task<JsonDocument?> CallApi(string path, object? body)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}{path}");

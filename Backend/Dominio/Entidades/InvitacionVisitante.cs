@@ -20,7 +20,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Entidades
         public string? HikCentralReservationId { get; set; }
         public DateTime? FechaCompletado { get; set; }
 
-        // Navigation properties
+        // Propiedades de navegacion
         public Invitacion? Invitacion { get; set; }
         public Visitante? Visitante { get; set; }
     }

@@ -44,10 +44,22 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
                 services.AddHttpClient<IHikCentralService, HikCentralService>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
                     {
-                        // HikCentral usa certificado auto-firmado
+                        // HikCentral usa certificado autofirmado
                         ServerCertificateCustomValidationCallback = (_, _, _, _) => true
                     });
             }
+            // AuditLog: mock o real segun configuracion
+            var useMockAudit = config.GetValue<bool>("AuditLog:UseMock", true);
+            if (useMockAudit)
+            {
+                services.AddScoped<IAuditLogService, MockAuditLogService>();
+            }
+            else
+            {
+                // TODO: services.AddScoped<IAuditLogService, DynamoDbAuditLogService>();
+                services.AddScoped<IAuditLogService, MockAuditLogService>();
+            }
+
            // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             var repositories = assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Repository") && t.Name != "GenericRepository");

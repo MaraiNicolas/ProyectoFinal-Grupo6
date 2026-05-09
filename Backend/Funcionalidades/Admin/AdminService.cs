@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProyectoFinal_Grupo6.Api.Dominio.Entidades;
+using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 
 namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
@@ -7,10 +8,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
     public class AdminService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _auditLog;
 
-        public AdminService(ApplicationDbContext context)
+        public AdminService(ApplicationDbContext context, IAuditLogService auditLog)
         {
             _context = context;
+            _auditLog = auditLog;
         }
 
         // --- Usuarios ---
@@ -78,22 +81,11 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
 
         public async Task<List<AuditLog>> ObtenerAuditLogs(string? eventType, DateTime? desde, DateTime? hasta)
         {
-            var query = _context.Set<AuditLog>().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(eventType))
-                query = query.Where(a => a.EventType == eventType);
-
-            if (desde.HasValue)
-                query = query.Where(a => a.Timestamp >= desde.Value);
-
-            if (hasta.HasValue)
-                query = query.Where(a => a.Timestamp <= hasta.Value);
-
-            return await query.OrderByDescending(a => a.Timestamp).ToListAsync();
+            return await _auditLog.ObtenerLogs(eventType, desde, hasta);
         }
     }
 
-    // Request DTOs
+    // DTOs de request
     public class CrearUsuarioRequest
     {
         public string Nombre { get; set; } = string.Empty;

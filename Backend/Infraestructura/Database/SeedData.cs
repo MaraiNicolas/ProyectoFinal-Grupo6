@@ -9,7 +9,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
         public static void Inicializar(ApplicationDbContext context)
         {
             if (context.Set<Usuario>().Any())
-                return; // Already seeded
+                return; // Ya tiene datos
 
             // --- Usuarios ---
             var admin = new Usuario

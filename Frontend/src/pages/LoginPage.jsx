@@ -1,3 +1,5 @@
+import { Button } from '../components/Button'
+
 export function LoginPage({ auth }) {
   const { email, setEmail, password, setPassword, handleSubmit } = auth
 
@@ -34,9 +36,9 @@ export function LoginPage({ auth }) {
             <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
           </div>
 
-          <button type="submit" className="login-button">
+          <Button type="submit" variant="brand" size="lg" fullWidth>
             Entrar
-          </button>
+          </Button>
         </form>
       </section>
     </main>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useVisitorFilters } from '../hooks/useVisitorFilters'
 import { DataGrid } from '../components/DataGrid'
+import { Button } from '../components/Button'
 
 export function VisitantesPage({
   visitors,
@@ -31,9 +32,9 @@ export function VisitantesPage({
           <h1>Visitantes registrados</h1>
         </div>
 
-        <button type="button" className="primary-action-button" onClick={onCreateVisitor}>
+        <Button variant="primary" onClick={onCreateVisitor}>
           Nuevo visitante
-        </button>
+        </Button>
       </div>
 
       <section className="filters-panel">
@@ -114,20 +115,12 @@ export function VisitantesPage({
             </p>
 
             <div className="confirm-actions">
-              <button
-                type="button"
-                className="secondary-action-button"
-                onClick={() => setVisitorToDelete(null)}
-              >
+              <Button variant="secondary" onClick={() => setVisitorToDelete(null)}>
                 No
-              </button>
-              <button
-                type="button"
-                className="danger-action-button"
-                onClick={handleConfirmDelete}
-              >
+              </Button>
+              <Button variant="danger" onClick={handleConfirmDelete}>
                 Si, eliminar
-              </button>
+              </Button>
             </div>
           </section>
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Button } from '../components/Button'
 
 const buildInitialForm = (initialData) => ({
   nombre: initialData?.nombre ?? '',
@@ -87,12 +88,12 @@ export function NuevoVisitantePage({
           </label>
 
           <div className="visitor-form-actions">
-            <button type="button" className="secondary-action-button" onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancelar
-            </button>
-            <button type="submit" className="primary-action-button">
+            </Button>
+            <Button type="submit" variant="primary">
               {submitLabel}
-            </button>
+            </Button>
           </div>
         </form>
       </section>

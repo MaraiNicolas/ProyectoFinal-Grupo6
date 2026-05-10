@@ -1,3 +1,5 @@
+import { Button } from './Button'
+
 export function Navbar({ userName, onLogout }) {
   return (
     <header className="navbar">
@@ -5,9 +7,9 @@ export function Navbar({ userName, onLogout }) {
 
       <div className="navbar-actions">
         <span className="navbar-user">{userName}</span>
-        <button type="button" className="logout-button" onClick={onLogout}>
+        <Button variant="brand" size="sm" onClick={onLogout}>
           Cerrar sesion
-        </button>
+        </Button>
       </div>
     </header>
   )

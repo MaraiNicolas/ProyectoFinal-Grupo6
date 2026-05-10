@@ -60,6 +60,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     SeedData.Inicializar(context);
 }
+app.UseExceptionHandler();
 
 app.UseCors("AllowReact");
 // Configurar el pipeline HTTP

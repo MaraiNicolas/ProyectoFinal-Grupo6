@@ -1,3 +1,5 @@
+import { Button } from '../components/Button'
+
 export function LoginPage({ auth }) {
   const { email, setEmail, password, setPassword, handleSubmit, error } = auth
 
@@ -32,9 +34,9 @@ export function LoginPage({ auth }) {
 
           {error ? <p className="login-error">{error}</p> : null}
 
-          <button type="submit" className="login-button">
+          <Button type="submit" variant="brand" size="lg" fullWidth>
             Entrar
-          </button>
+          </Button>
         </form>
       </section>
     </main>

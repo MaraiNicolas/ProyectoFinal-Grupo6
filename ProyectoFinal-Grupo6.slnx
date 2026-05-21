@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Backend/">
+    <Project Path="Backend/ProyectoFinal-Grupo6.Api.csproj" />
+  </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+</Solution>

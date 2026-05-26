@@ -1,9 +1,11 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones;
+using Amazon.DynamoDBv2;
+using ProyectoFinal_Grupo6.Api.Infraestructura.Servicios;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,6 +61,20 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     SeedData.Inicializar(context);
+}
+
+// Intentar crear la tabla AuditLogs en DynamoDB Local si está disponible
+try
+{
+    var dynamoConfig = new AmazonDynamoDBConfig { ServiceURL = "http://localhost:8000" };
+    using var dynamoClient = new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
+    await DynamoDbInitializer.EnsureAuditLogsTableAsync(dynamoClient);
+    Console.WriteLine("Tabla AuditLogs verificada/creada en DynamoDB Local.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error al inicializar DynamoDB Local: {ex.Message}");
+    Console.WriteLine(ex.StackTrace);
 }
 app.UseExceptionHandler();
 

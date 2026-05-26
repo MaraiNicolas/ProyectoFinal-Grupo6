@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { obtenerInvitaciones } from '../services/api'
+import { Button } from '../components/Button'
 
 export function InvitacionesPage() {
   const navigate = useNavigate()
@@ -9,11 +10,14 @@ export function InvitacionesPage() {
   const [filtroFecha, setFiltroFecha] = useState('')
 
   useEffect(() => {
-    setLoading(true)
+    let cancelled = false
     obtenerInvitaciones(filtroFecha || undefined).then((data) => {
-      setInvitaciones(data || [])
-      setLoading(false)
+      if (!cancelled) {
+        setInvitaciones(data || [])
+        setLoading(false)
+      }
     })
+    return () => { cancelled = true }
   }, [filtroFecha])
 
   return (
@@ -22,13 +26,9 @@ export function InvitacionesPage() {
         <div className="dashboard-copy">
           <h1>Mis Invitaciones</h1>
         </div>
-        <button
-          type="button"
-          className="primary-action-button"
-          onClick={() => navigate('/invitaciones/nueva')}
-        >
+        <Button variant="primary" onClick={() => navigate('/invitaciones/nueva')}>
           Nueva invitacion
-        </button>
+        </Button>
       </div>
 
       <section className="filters-panel">

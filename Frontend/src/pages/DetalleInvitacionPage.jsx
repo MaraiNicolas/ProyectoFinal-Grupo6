@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { obtenerInvitacion, cancelarInvitacion } from '../services/api'
+import { Button } from '../components/Button'
 
 export function DetalleInvitacionPage() {
   const { id } = useParams()
@@ -32,9 +33,9 @@ export function DetalleInvitacionPage() {
           <h1>Detalle de Invitacion</h1>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button type="button" className="secondary-action-button" onClick={() => navigate('/invitaciones')}>Volver</button>
+          <Button variant="secondary" onClick={() => navigate('/invitaciones')}>Volver</Button>
           {invitacion.estado !== 'Cancelada' && invitacion.estado !== 'Expirada' ? (
-            <button type="button" className="danger-action-button" onClick={() => setShowConfirm(true)}>Cancelar invitacion</button>
+            <Button variant="danger" onClick={() => setShowConfirm(true)}>Cancelar invitacion</Button>
           ) : null}
         </div>
       </div>
@@ -86,14 +87,13 @@ export function DetalleInvitacionPage() {
                 <td>{v.visitante ? `${v.visitante.nombre} ${v.visitante.apellido}` : '-'}</td>
                 <td>{v.fechaCompletado ? new Date(v.fechaCompletado).toLocaleString('es-AR') : '-'}</td>
                 <td>
-                  <button
-                    type="button"
-                    className="secondary-action-button"
-                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => navigator.clipboard.writeText(`${window.location.origin}${v.link}`)}
                   >
                     Copiar link
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -107,8 +107,8 @@ export function DetalleInvitacionPage() {
             <h2>Cancelar invitacion</h2>
             <p>Estas seguro que deseas cancelar esta invitacion? Esta accion no se puede deshacer.</p>
             <div className="confirm-actions">
-              <button type="button" className="secondary-action-button" onClick={() => setShowConfirm(false)}>No</button>
-              <button type="button" className="danger-action-button" onClick={handleCancelar}>Si, cancelar</button>
+              <Button variant="secondary" onClick={() => setShowConfirm(false)}>No</Button>
+              <Button variant="danger" onClick={handleCancelar}>Si, cancelar</Button>
             </div>
           </section>
         </div>

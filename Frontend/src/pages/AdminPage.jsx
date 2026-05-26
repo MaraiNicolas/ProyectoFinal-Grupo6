@@ -5,6 +5,7 @@ import {
   obtenerConfiguracion, actualizarConfiguracion,
   obtenerAuditLogs, obtenerInvitaciones,
 } from '../services/api'
+import { Button } from '../components/Button'
 
 const TABS = ['Invitaciones', 'Usuarios', 'Destinos', 'Configuracion', 'Audit Logs']
 
@@ -108,10 +109,10 @@ function AdminUsuarios() {
 
   return (
     <div style={{ marginTop: 20 }}>
-      <button type="button" className="primary-action-button" style={{ marginBottom: 16 }}
+      <Button variant="primary" style={{ marginBottom: 16 }}
         onClick={() => { setShowForm(true); setEditingId(null); setForm({ nombre: '', apellido: '', email: '', rol: 'Empleado' }) }}>
         Nuevo usuario
-      </button>
+      </Button>
 
       {showForm ? (
         <section className="table-panel" style={{ marginBottom: 20 }}>
@@ -126,8 +127,8 @@ function AdminUsuarios() {
               </select>
             </label>
             <div className="visitor-form-actions">
-              <button type="button" className="secondary-action-button" onClick={() => setShowForm(false)}>Cancelar</button>
-              <button type="submit" className="primary-action-button">{editingId ? 'Guardar' : 'Crear'}</button>
+              <Button variant="secondary" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button variant="primary" type="submit">{editingId ? 'Guardar' : 'Crear'}</Button>
             </div>
           </form>
         </section>
@@ -142,8 +143,8 @@ function AdminUsuarios() {
                 <td>{u.nombre}</td><td>{u.apellido}</td><td>{u.email}</td><td>{u.rol}</td>
                 <td>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="secondary-action-button" style={{ padding: '8px 12px', fontSize: '0.85rem' }} onClick={() => handleEdit(u)}>Editar</button>
-                    <button type="button" className="danger-action-button" style={{ padding: '8px 12px', fontSize: '0.85rem' }} onClick={() => handleDelete(u.guid)}>Eliminar</button>
+                    <Button variant="secondary" size="sm" onClick={() => handleEdit(u)}>Editar</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(u.guid)}>Eliminar</Button>
                   </div>
                 </td>
               </tr>
@@ -184,10 +185,10 @@ function AdminDestinos() {
 
   return (
     <div style={{ marginTop: 20 }}>
-      <button type="button" className="primary-action-button" style={{ marginBottom: 16 }}
+      <Button variant="primary" style={{ marginBottom: 16 }}
         onClick={() => { setShowForm(true); setEditingId(null); setForm({ nombre: '', descripcion: '' }) }}>
         Nuevo destino
-      </button>
+      </Button>
 
       {showForm ? (
         <section className="table-panel" style={{ marginBottom: 20 }}>
@@ -195,8 +196,8 @@ function AdminDestinos() {
             <label className="field"><span>Nombre</span><input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required placeholder="Ej: Piso 6" /></label>
             <label className="field"><span>Descripcion</span><input value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Ej: Sala de conferencias" /></label>
             <div className="visitor-form-actions">
-              <button type="button" className="secondary-action-button" onClick={() => setShowForm(false)}>Cancelar</button>
-              <button type="submit" className="primary-action-button">{editingId ? 'Guardar' : 'Crear'}</button>
+              <Button variant="secondary" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button variant="primary" type="submit">{editingId ? 'Guardar' : 'Crear'}</Button>
             </div>
           </form>
         </section>
@@ -211,8 +212,8 @@ function AdminDestinos() {
                 <td>{d.nombre}</td><td>{d.descripcion || '-'}</td>
                 <td>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="secondary-action-button" style={{ padding: '8px 12px', fontSize: '0.85rem' }} onClick={() => handleEdit(d)}>Editar</button>
-                    <button type="button" className="danger-action-button" style={{ padding: '8px 12px', fontSize: '0.85rem' }} onClick={() => handleDelete(d.guid)}>Eliminar</button>
+                    <Button variant="secondary" size="sm" onClick={() => handleEdit(d)}>Editar</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(d.guid)}>Eliminar</Button>
                   </div>
                 </td>
               </tr>
@@ -259,12 +260,12 @@ function AdminConfiguracion() {
               <td>
                 {editingKey === c.clave ? (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="primary-action-button" style={{ padding: '8px 12px', fontSize: '0.85rem' }} onClick={() => handleSave(c.clave)}>Guardar</button>
-                    <button type="button" className="secondary-action-button" style={{ padding: '8px 12px', fontSize: '0.85rem' }} onClick={() => setEditingKey(null)}>Cancelar</button>
+                    <Button variant="primary" size="sm" onClick={() => handleSave(c.clave)}>Guardar</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setEditingKey(null)}>Cancelar</Button>
                   </div>
                 ) : (
-                  <button type="button" className="secondary-action-button" style={{ padding: '8px 12px', fontSize: '0.85rem' }}
-                    onClick={() => { setEditingKey(c.clave); setEditValue(c.valor) }}>Editar</button>
+                  <Button variant="secondary" size="sm"
+                    onClick={() => { setEditingKey(c.clave); setEditValue(c.valor) }}>Editar</Button>
                 )}
               </td>
             </tr>

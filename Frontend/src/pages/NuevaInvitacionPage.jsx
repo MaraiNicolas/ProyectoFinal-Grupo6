@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { crearInvitacion, obtenerDestinos, obtenerConfiguracion } from '../services/api'
+import { Button } from '../components/Button'
 
 export function NuevaInvitacionPage() {
   const navigate = useNavigate()
   const [destinos, setDestinos] = useState([])
-  const [bufferDefault, setBufferDefault] = useState(120)
+  const [, setBufferDefault] = useState(120)
   const [error, setError] = useState('')
   const [creada, setCreada] = useState(null)
 
@@ -86,24 +87,24 @@ export function NuevaInvitacionPage() {
             <div key={v.guid} className="link-row">
               <span>{v.emailVisitante}</span>
               <code>{window.location.origin}{v.link}</code>
-              <button
-                type="button"
-                className="secondary-action-button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => navigator.clipboard.writeText(`${window.location.origin}${v.link}`)}
               >
                 Copiar
-              </button>
+              </Button>
             </div>
           ))}
         </section>
 
         <div className="visitor-form-actions" style={{ marginTop: 20 }}>
-          <button type="button" className="secondary-action-button" onClick={() => navigate('/invitaciones')}>
+          <Button variant="secondary" onClick={() => navigate('/invitaciones')}>
             Ver invitaciones
-          </button>
-          <button type="button" className="primary-action-button" onClick={() => { setCreada(null); setVisitantes([{ email: '', telefono: '' }]) }}>
+          </Button>
+          <Button variant="primary" onClick={() => { setCreada(null); setVisitantes([{ email: '', telefono: '' }]) }}>
             Crear otra
-          </button>
+          </Button>
         </div>
       </section>
     )
@@ -169,20 +170,20 @@ export function NuevaInvitacionPage() {
                   <input type="tel" value={v.telefono} onChange={(e) => handleVisitanteChange(i, 'telefono', e.target.value)} placeholder="+5491100001111" />
                 </label>
                 {visitantes.length > 1 ? (
-                  <button type="button" className="danger-action-button" onClick={() => removeVisitante(i)} style={{ alignSelf: 'end' }}>Quitar</button>
+                  <Button variant="danger" size="sm" onClick={() => removeVisitante(i)} style={{ alignSelf: 'end' }}>Quitar</Button>
                 ) : null}
               </div>
             ))}
-            <button type="button" className="secondary-action-button" onClick={addVisitante}>
+            <Button variant="secondary" onClick={addVisitante}>
               Agregar visitante
-            </button>
+            </Button>
           </div>
 
           {error ? <p className="login-error">{error}</p> : null}
 
           <div className="visitor-form-actions">
-            <button type="button" className="secondary-action-button" onClick={() => navigate('/invitaciones')}>Cancelar</button>
-            <button type="submit" className="primary-action-button">Crear invitacion</button>
+            <Button variant="secondary" onClick={() => navigate('/invitaciones')}>Cancelar</Button>
+            <Button variant="primary" type="submit">Crear invitacion</Button>
           </div>
         </form>
       </section>

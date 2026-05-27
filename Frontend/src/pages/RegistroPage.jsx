@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { obtenerRegistro, completarRegistro } from '../services/api'
+import { Button } from '../components/Button'
 
 export function RegistroPage() {
   const { token } = useParams()
@@ -169,9 +170,9 @@ export function RegistroPage() {
 
           {error ? <p className="login-error">{error}</p> : null}
 
-          <button type="submit" className="login-button">
+          <Button variant="primary" type="submit" fullWidth>
             Confirmar registro
-          </button>
+          </Button>
         </form>
       </section>
     </main>

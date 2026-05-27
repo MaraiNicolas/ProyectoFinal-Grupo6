@@ -6,13 +6,9 @@ using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
 namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 {
     // Implementacion real que se conecta a la API de HikCentral.
-    // Requiere VPN y permisos habilitados en el servidor.
-    // Configuracion en appsettings.json seccion "HikCentral".
-    //
-    // Mientras no tengamos permisos para los endpoints de visitantes/reservas,
-    // usamos el endpoint de version como ping: si responde con exito, retornamos
-    // datos simulados. Cuando los permisos esten habilitados, se cambian los
-    // endpoints y se parsea la respuesta real.
+    // Requiere VPN y credenciales configuradas en appsettings.json seccion "HikCentral".
+    // BuscarVisitantePorEmail: no soportado por la API (retorna null siempre).
+    // CrearReserva: llama al endpoint de appointment y parsea appointRecordId, visitorId, qrCodeImage.
     public class HikCentralService : IHikCentralService
     {
         private readonly HttpClient _httpClient;
@@ -21,11 +17,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
         private readonly string _baseUrl;
         private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-        // Endpoints reales (descomentar cuando tengamos permisos)
-        // private const string ENDPOINT_APPOINTMENT = "/artemis/api/visitor/v1/appointment";
-        // private const string ENDPOINT_VISITOR_GROUPS = "/artemis/api/visitor/v1/visitorgroups/groupinfo";
-
-        // Endpoint de ping (el unico con permisos por ahora)
+        private const string ENDPOINT_APPOINTMENT = "/artemis/api/visitor/v1/appointment";
         private const string ENDPOINT_VERSION = "/artemis/api/common/v1/version";
 
         public HikCentralService(HttpClient httpClient, IConfiguration configuration)
@@ -38,12 +30,9 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 
         public async Task<HikVisitante?> BuscarVisitantePorEmail(string email)
         {
-            // TODO: Cuando tengamos permisos, usar ENDPOINT_VISITOR_GROUPS
-            // y filtrar por email en la respuesta.
-            //
-            // Por ahora: ping al servidor para verificar conexion.
-            // Si responde OK, retornamos null (visitante no encontrado)
-            // porque no podemos buscar realmente.
+            // La API de HikCentral no soporta busqueda por email.
+            // El endpoint de visitor groups solo retorna ID y fullName.
+            // Retornamos null siempre (visitante tratado como nuevo).
             var conectado = await PingServidor();
             if (!conectado)
                 throw new Exception("No se pudo conectar con HikCentral. Verifique la VPN.");
@@ -53,13 +42,9 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 
         public async Task<HikReservaResponse> CrearReserva(HikReservaRequest request)
         {
-            // TODO: Cuando tengamos permisos, usar ENDPOINT_APPOINTMENT
-            // con el body real (visitStartTime, visitEndTime, visitorInfoList, etc.)
-            //
-            // Por ahora: ping al servidor. Si responde OK, simulamos
-            // que la reserva fue creada exitosamente.
-            var conectado = await PingServidor();
-            if (!conectado)
+            var response = await CallApi(ENDPOINT_APPOINTMENT, request);
+
+            if (response == null)
             {
                 return new HikReservaResponse
                 {
@@ -68,10 +53,26 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
                 };
             }
 
+            var root = response.RootElement;
+            var code = root.TryGetProperty("code", out var codeProp) ? codeProp.GetString() : null;
+
+            if (code != "0")
+            {
+                var msg = root.TryGetProperty("msg", out var msgProp) ? msgProp.GetString() : "Error desconocido";
+                return new HikReservaResponse
+                {
+                    Success = false,
+                    ErrorMessage = $"HikCentral error ({code}): {msg}"
+                };
+            }
+
+            var data = root.GetProperty("data");
             return new HikReservaResponse
             {
                 Success = true,
-                ReservationId = $"HIK-{Guid.NewGuid().ToString()[..8].ToUpper()}"
+                ReservationId = data.TryGetProperty("appointRecordId", out var rid) ? rid.GetString() : null,
+                VisitorId = data.TryGetProperty("visitorId", out var vid) ? vid.GetString() : null,
+                QrCodeImage = data.TryGetProperty("qrCodeImage", out var qr) ? qr.GetString() : null
             };
         }
 

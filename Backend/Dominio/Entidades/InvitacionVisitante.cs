@@ -18,6 +18,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Entidades
         public string EmailVisitante { get; set; } = string.Empty;
         public string? TelefonoVisitante { get; set; }
         public string? HikCentralReservationId { get; set; }
+        public string? QrCodeImage { get; set; }
         public DateTime? FechaCompletado { get; set; }
 
         // Propiedades de navegacion

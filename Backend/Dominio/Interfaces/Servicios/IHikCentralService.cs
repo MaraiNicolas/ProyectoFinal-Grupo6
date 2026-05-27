@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios
 {
     // Interfaz para comunicacion con HikCentral.
@@ -34,6 +36,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios
 
     public class HikVisitorInfo
     {
+        [JsonPropertyName("VisitorInfo")]
         public HikVisitante VisitorInfo { get; set; } = new();
     }
 
@@ -41,6 +44,8 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios
     {
         public bool Success { get; set; }
         public string? ReservationId { get; set; }
+        public string? VisitorId { get; set; }
+        public string? QrCodeImage { get; set; }
         public string? ErrorMessage { get; set; }
     }
 }

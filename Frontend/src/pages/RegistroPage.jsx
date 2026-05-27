@@ -37,7 +37,11 @@ export function RegistroPage() {
     setError('')
     try {
       const data = await completarRegistro(token, form)
-      setRegistro(data)
+      if (data.estado === 'Error') {
+        setError(data.errorMessage || 'Error al crear la reserva.')
+      } else {
+        setRegistro(data)
+      }
     } catch {
       setError('Error al enviar el formulario.')
     }
@@ -93,8 +97,21 @@ export function RegistroPage() {
       <main className="login-shell">
         <section className="login-panel">
           <h1>Registro completado</h1>
-          <p>Tu registro fue enviado exitosamente. Recibiras un QR por email para acceder al edificio.</p>
+          <p>Tu registro fue enviado exitosamente.</p>
           <VisitDetails registro={registro} />
+          {registro.qrCodeImage ? (
+            <div className="qr-section">
+              <p className="qr-label">Tu codigo QR para acceder al edificio:</p>
+              <img
+                src={`data:image/png;base64,${registro.qrCodeImage}`}
+                alt="Codigo QR de acceso"
+                className="qr-image"
+              />
+              <p className="qr-hint">Tambien recibiras este QR por email.</p>
+            </div>
+          ) : (
+            <p>Recibiras un QR por email para acceder al edificio.</p>
+          )}
         </section>
       </main>
     )

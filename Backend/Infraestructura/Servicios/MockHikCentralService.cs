@@ -38,13 +38,14 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 
         public async Task<HikReservaResponse> CrearReserva(HikReservaRequest request)
         {
-            // Simula la creacion de una reserva en HikCentral
             await Task.CompletedTask;
 
             return new HikReservaResponse
             {
                 Success = true,
-                ReservationId = $"MOCK-RES-{Guid.NewGuid().ToString()[..8].ToUpper()}"
+                ReservationId = $"MOCK-RES-{Guid.NewGuid().ToString()[..8].ToUpper()}",
+                VisitorId = $"MOCK-VIS-{Guid.NewGuid().ToString()[..4].ToUpper()}",
+                QrCodeImage = null
             };
         }
 

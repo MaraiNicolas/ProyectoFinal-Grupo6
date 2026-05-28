@@ -25,11 +25,13 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return CreatedAtAction(nameof(ObtenerPorId), new { id = invitacion.Guid }, new
             {
                 invitacion.Guid,
+                invitacion.Titulo,
+                invitacion.Descripcion,
+                invitacion.Motivo,
                 invitacion.Fecha,
                 invitacion.HoraInicio,
                 invitacion.HoraFin,
                 invitacion.BufferMinutos,
-                invitacion.Motivo,
                 invitacion.Estado,
                 visitantes = invitacion.Visitantes.Select(v => new
                 {
@@ -51,10 +53,11 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return Ok(invitaciones.Select(i => new
             {
                 i.Guid,
+                i.Titulo,
+                i.Motivo,
                 i.Fecha,
                 i.HoraInicio,
                 i.HoraFin,
-                i.Motivo,
                 i.Estado,
                 usuario = i.Usuario != null ? new { i.Usuario.Nombre, i.Usuario.Apellido } : null,
                 destino = i.Destino != null ? new { i.Destino.Nombre } : null,
@@ -73,11 +76,13 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return Ok(new
             {
                 invitacion.Guid,
+                invitacion.Titulo,
+                invitacion.Descripcion,
+                invitacion.Motivo,
                 invitacion.Fecha,
                 invitacion.HoraInicio,
                 invitacion.HoraFin,
                 invitacion.BufferMinutos,
-                invitacion.Motivo,
                 invitacion.Estado,
                 usuario = invitacion.Usuario != null ? new { invitacion.Usuario.Nombre, invitacion.Usuario.Apellido, invitacion.Usuario.Email } : null,
                 destino = invitacion.Destino != null ? new { invitacion.Destino.Nombre, invitacion.Destino.Descripcion } : null,
@@ -106,6 +111,18 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                 return NotFound(new { mensaje = "Invitacion no encontrada" });
 
             return Ok(new { invitacion.Guid, invitacion.Estado });
+        }
+
+        [HttpPut("{id}/visitantes/{visitanteId}/cancelar")]
+        public async Task<IActionResult> CancelarVisitante(Guid id, Guid visitanteId)
+        {
+            var usuarioId = ObtenerUsuarioId();
+            var iv = await _service.CancelarVisitante(id, visitanteId, usuarioId);
+
+            if (iv == null)
+                return NotFound(new { mensaje = "Visitante no encontrado" });
+
+            return Ok(new { iv.Guid, iv.EstadoFormulario });
         }
 
         private Guid ObtenerUsuarioId()

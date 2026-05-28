@@ -84,6 +84,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 HoraInicio = new TimeSpan(10, 0, 0),
                 HoraFin = new TimeSpan(12, 0, 0),
                 BufferMinutos = 120,
+                Titulo = "Reunion de proyecto",
                 Motivo = "Reunion de proyecto",
                 Estado = "Activa"
             };
@@ -97,6 +98,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 HoraInicio = new TimeSpan(15, 0, 0),
                 HoraFin = new TimeSpan(16, 30, 0),
                 BufferMinutos = 120,
+                Titulo = "Entrevista candidato",
                 Motivo = "Entrevista",
                 Estado = "Pendiente"
             };
@@ -110,6 +112,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 HoraInicio = new TimeSpan(9, 0, 0),
                 HoraFin = new TimeSpan(11, 0, 0),
                 BufferMinutos = 120,
+                Titulo = "Entrevista tecnica",
                 Motivo = "Entrevista",
                 Estado = "Expirada"
             };
@@ -123,6 +126,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 HoraInicio = new TimeSpan(14, 0, 0),
                 HoraFin = new TimeSpan(15, 0, 0),
                 BufferMinutos = 120,
+                Titulo = "Presentacion comercial",
                 Motivo = "Presentacion comercial",
                 Estado = "Pendiente"
             };

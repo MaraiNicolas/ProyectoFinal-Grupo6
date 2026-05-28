@@ -70,6 +70,10 @@ export function cancelarInvitacion(id) {
   return request(`/invitaciones/${id}/cancelar`, { method: 'PUT' })
 }
 
+export function cancelarVisitante(invitacionId, visitanteId) {
+  return request(`/invitaciones/${invitacionId}/visitantes/${visitanteId}/cancelar`, { method: 'PUT' })
+}
+
 // --- Registro (public) ---
 export function obtenerRegistro(token) {
   return request(`/registro/${token}`)

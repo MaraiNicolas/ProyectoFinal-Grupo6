@@ -16,6 +16,8 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Entidades
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
         public int BufferMinutos { get; set; } = 120;
+        public string Titulo { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
         public string? Motivo { get; set; }
         public string Estado { get; set; } = "Pendiente";
 

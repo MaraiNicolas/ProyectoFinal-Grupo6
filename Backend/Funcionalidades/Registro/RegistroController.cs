@@ -28,7 +28,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             if (resultado == null)
                 return NotFound(new { mensaje = "Token invalido" });
 
-            if (resultado.Estado == "Cancelada" || resultado.Estado == "Expirada")
+            if (resultado.Estado == "Cancelada" || resultado.Estado == "Expirada" || resultado.Estado == "Error")
                 return BadRequest(resultado);
 
             return Ok(resultado);

@@ -26,7 +26,9 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                 HoraInicio = request.HoraInicio,
                 HoraFin = request.HoraFin,
                 BufferMinutos = request.BufferMinutos,
-                Motivo = request.Motivo,
+                Titulo = request.Titulo,
+                Descripcion = request.Descripcion,
+                Motivo = string.IsNullOrWhiteSpace(request.Motivo) ? request.Titulo : request.Motivo,
                 Estado = "Pendiente"
             };
 
@@ -89,6 +91,23 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
             return invitacion;
         }
+
+        public async Task<InvitacionVisitante?> CancelarVisitante(Guid invitacionId, Guid visitanteId, Guid usuarioId)
+        {
+            var iv = await _context.Set<InvitacionVisitante>()
+                .FirstOrDefaultAsync(v => v.Guid == visitanteId && v.InvitacionId == invitacionId);
+
+            if (iv == null)
+                return null;
+
+            iv.EstadoFormulario = "Cancelado";
+            await _context.SaveChangesAsync();
+
+            await _auditLog.RegistrarEvento("VISITOR_CANCELLED", usuarioId, invitacionId: invitacionId,
+                metadata: $"{{\"invitacionVisitanteId\": \"{visitanteId}\", \"email\": \"{iv.EmailVisitante}\"}}");
+
+            return iv;
+        }
     }
 
     // DTOs de request
@@ -99,6 +118,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
         public int BufferMinutos { get; set; } = 120;
+        public string Titulo { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
         public string? Motivo { get; set; }
         public List<VisitanteInvitacionRequest> Visitantes { get; set; } = new();
     }

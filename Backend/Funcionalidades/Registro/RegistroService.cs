@@ -33,8 +33,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
 
             var invitacion = iv.Invitacion!;
 
-            // Verificar si fue cancelada
+            // Verificar si la invitacion fue cancelada
             if (invitacion.Estado == "Cancelada")
+                return BuildResponse(iv, "Cancelada");
+
+            // Verificar si este visitante fue cancelado individualmente
+            if (iv.EstadoFormulario == "Cancelado")
                 return BuildResponse(iv, "Cancelada");
 
             // Verificar si expiro
@@ -89,39 +93,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             if (iv.EstadoFormulario == "Completado")
                 return BuildResponse(iv, "Completado");
 
-            // Crear o actualizar registro de Visitante
-            var visitante = await _context.Set<Visitante>()
-                .FirstOrDefaultAsync(v => v.Email == iv.EmailVisitante);
-
-            if (visitante == null)
-            {
-                visitante = new Visitante
-                {
-                    Nombre = request.Nombre,
-                    Apellido = request.Apellido,
-                    Email = iv.EmailVisitante,
-                    Telefono = request.Telefono,
-                    TipoDocumento = request.TipoDocumento,
-                    NumeroDocumento = request.NumeroDocumento
-                };
-                _context.Set<Visitante>().Add(visitante);
-            }
-            else
-            {
-                // Actualizar datos del visitante existente
-                visitante.Nombre = request.Nombre;
-                visitante.Apellido = request.Apellido;
-                visitante.Telefono = request.Telefono;
-                visitante.TipoDocumento = request.TipoDocumento;
-                visitante.NumeroDocumento = request.NumeroDocumento;
-            }
-
-            // Actualizar InvitacionVisitante
-            iv.VisitanteId = visitante.Guid;
-            iv.EstadoFormulario = "Completado";
-            iv.FechaCompletado = DateTime.UtcNow;
-
-            // Crear reserva en HikCentral
+            // Crear reserva en HikCentral PRIMERO — si falla, no completamos el registro
             var hikRequest = new HikReservaRequest
             {
                 VisitStartTime = (invitacion.Fecha.Date + invitacion.HoraInicio - TimeSpan.FromMinutes(invitacion.BufferMinutos)).ToString("yyyy-MM-ddTHH:mm:sszzz"),
@@ -144,7 +116,51 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
                 }
             };
             var hikResponse = await _hikCentral.CrearReserva(hikRequest);
+
+            if (!hikResponse.Success)
+            {
+                return new RegistroResponse
+                {
+                    Estado = "Error",
+                    ErrorMessage = hikResponse.ErrorMessage ?? "Error al crear la reserva en HikCentral."
+                };
+            }
+
+            // HikCentral OK — crear o actualizar registro de Visitante
+            var visitante = await _context.Set<Visitante>()
+                .FirstOrDefaultAsync(v => v.Email == iv.EmailVisitante);
+
+            if (visitante == null)
+            {
+                visitante = new Visitante
+                {
+                    Nombre = request.Nombre,
+                    Apellido = request.Apellido,
+                    Email = iv.EmailVisitante,
+                    Telefono = request.Telefono,
+                    TipoDocumento = request.TipoDocumento,
+                    NumeroDocumento = request.NumeroDocumento
+                };
+                _context.Set<Visitante>().Add(visitante);
+            }
+            else
+            {
+                visitante.Nombre = request.Nombre;
+                visitante.Apellido = request.Apellido;
+                visitante.Telefono = request.Telefono;
+                visitante.TipoDocumento = request.TipoDocumento;
+                visitante.NumeroDocumento = request.NumeroDocumento;
+            }
+
+            // Guardar visitorId de HikCentral
+            visitante.HikCentralVisitorId = hikResponse.VisitorId;
+
+            // Actualizar InvitacionVisitante
+            iv.VisitanteId = visitante.Guid;
+            iv.EstadoFormulario = "Completado";
+            iv.FechaCompletado = DateTime.UtcNow;
             iv.HikCentralReservationId = hikResponse.ReservationId;
+            iv.QrCodeImage = hikResponse.QrCodeImage;
 
             // Actualizar estado de la invitacion si es el primer visitante en completar
             if (invitacion.Estado == "Pendiente")
@@ -155,8 +171,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             // Registrar eventos de auditoria
             await _auditLog.RegistrarEvento("FORM_COMPLETED", visitanteId: visitante.Guid, invitacionId: invitacion.Guid);
             await _auditLog.RegistrarEvento("RESERVATION_CREATED", visitanteId: visitante.Guid, invitacionId: invitacion.Guid,
-                metadata: $"{{\"hikCentralReservationId\": \"{iv.HikCentralReservationId}\"}}");
-
+                metadata: $"{{\"hikCentralReservationId\": \"{iv.HikCentralReservationId}\", \"hikCentralVisitorId\": \"{visitante.HikCentralVisitorId}\"}}");
 
             // Recargar con propiedades de navegacion
             iv = await _context.Set<InvitacionVisitante>()
@@ -183,9 +198,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
                 Anfitrion = invitacion.Usuario != null
                     ? $"{invitacion.Usuario.Nombre} {invitacion.Usuario.Apellido}"
                     : null,
+                Titulo = invitacion.Titulo,
+                Descripcion = invitacion.Descripcion,
                 Motivo = invitacion.Motivo,
                 EmailVisitante = iv.EmailVisitante,
                 FechaCompletado = iv.FechaCompletado,
+                QrCodeImage = iv.QrCodeImage,
                 Visitante = iv.Visitante != null ? new VisitanteResponse
                 {
                     Nombre = iv.Visitante.Nombre,
@@ -215,10 +233,14 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
         public TimeSpan? HoraFin { get; set; }
         public string? Destino { get; set; }
         public string? Anfitrion { get; set; }
+        public string? Titulo { get; set; }
+        public string? Descripcion { get; set; }
         public string? Motivo { get; set; }
         public string? EmailVisitante { get; set; }
         public bool EsVisitanteExistente { get; set; }
         public DateTime? FechaCompletado { get; set; }
+        public string? QrCodeImage { get; set; }
+        public string? ErrorMessage { get; set; }
         public VisitanteResponse? Visitante { get; set; }
     }
 

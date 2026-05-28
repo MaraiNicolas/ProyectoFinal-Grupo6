@@ -614,6 +614,12 @@
   color: var(--text-h);
   font: inherit;
   box-sizing: border-box;
+  text-align: center;
+  text-align-last: center;
+}
+
+.field-select option {
+  text-align: center;
 }
 
 .field-select:focus {

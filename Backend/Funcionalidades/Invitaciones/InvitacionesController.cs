@@ -113,6 +113,18 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return Ok(new { invitacion.Guid, invitacion.Estado });
         }
 
+        [HttpPut("{id}/visitantes/{visitanteId}/cancelar")]
+        public async Task<IActionResult> CancelarVisitante(Guid id, Guid visitanteId)
+        {
+            var usuarioId = ObtenerUsuarioId();
+            var iv = await _service.CancelarVisitante(id, visitanteId, usuarioId);
+
+            if (iv == null)
+                return NotFound(new { mensaje = "Visitante no encontrado" });
+
+            return Ok(new { iv.Guid, iv.EstadoFormulario });
+        }
+
         private Guid ObtenerUsuarioId()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier);

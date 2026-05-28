@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { obtenerInvitacion, cancelarInvitacion } from '../services/api'
+import { obtenerInvitacion, cancelarInvitacion, cancelarVisitante } from '../services/api'
 import { Button } from '../components/Button'
 
 export function DetalleInvitacionPage() {
@@ -9,6 +9,7 @@ export function DetalleInvitacionPage() {
   const [invitacion, setInvitacion] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [cancelVisitanteId, setCancelVisitanteId] = useState(null)
 
   useEffect(() => {
     obtenerInvitacion(id).then((data) => {
@@ -20,6 +21,12 @@ export function DetalleInvitacionPage() {
   const handleCancelar = async () => {
     await cancelarInvitacion(id)
     setShowConfirm(false)
+    obtenerInvitacion(id).then(setInvitacion)
+  }
+
+  const handleCancelarVisitante = async () => {
+    await cancelarVisitante(id, cancelVisitanteId)
+    setCancelVisitanteId(null)
     obtenerInvitacion(id).then(setInvitacion)
   }
 
@@ -75,7 +82,7 @@ export function DetalleInvitacionPage() {
               <th>Estado formulario</th>
               <th>Nombre</th>
               <th>Completado</th>
-              <th>Link</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -87,19 +94,43 @@ export function DetalleInvitacionPage() {
                 <td>{v.visitante ? `${v.visitante.nombre} ${v.visitante.apellido}` : '-'}</td>
                 <td>{v.fechaCompletado ? new Date(v.fechaCompletado).toLocaleString('es-AR') : '-'}</td>
                 <td>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}${v.link}`)}
-                  >
-                    Copiar link
-                  </Button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => navigator.clipboard.writeText(`${window.location.origin}${v.link}`)}
+                    >
+                      Copiar link
+                    </Button>
+                    {v.estadoFormulario !== 'Cancelado' && invitacion.estado !== 'Cancelada' ? (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setCancelVisitanteId(v.guid)}
+                      >
+                        Cancelar
+                      </Button>
+                    ) : null}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
+
+      {cancelVisitanteId ? (
+        <div className="confirm-overlay" onClick={() => setCancelVisitanteId(null)}>
+          <section className="confirm-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h2>Cancelar visitante</h2>
+            <p>Estas seguro que deseas cancelar este visitante? Su link de registro dejara de funcionar.</p>
+            <div className="confirm-actions">
+              <Button variant="secondary" onClick={() => setCancelVisitanteId(null)}>No</Button>
+              <Button variant="danger" onClick={handleCancelarVisitante}>Si, cancelar</Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {showConfirm ? (
         <div className="confirm-overlay" onClick={() => setShowConfirm(false)}>

@@ -33,8 +33,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
 
             var invitacion = iv.Invitacion!;
 
-            // Verificar si fue cancelada
+            // Verificar si la invitacion fue cancelada
             if (invitacion.Estado == "Cancelada")
+                return BuildResponse(iv, "Cancelada");
+
+            // Verificar si este visitante fue cancelado individualmente
+            if (iv.EstadoFormulario == "Cancelado")
                 return BuildResponse(iv, "Cancelada");
 
             // Verificar si expiro

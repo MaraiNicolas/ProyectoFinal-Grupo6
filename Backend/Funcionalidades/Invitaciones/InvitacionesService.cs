@@ -91,6 +91,23 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
             return invitacion;
         }
+
+        public async Task<InvitacionVisitante?> CancelarVisitante(Guid invitacionId, Guid visitanteId, Guid usuarioId)
+        {
+            var iv = await _context.Set<InvitacionVisitante>()
+                .FirstOrDefaultAsync(v => v.Guid == visitanteId && v.InvitacionId == invitacionId);
+
+            if (iv == null)
+                return null;
+
+            iv.EstadoFormulario = "Cancelado";
+            await _context.SaveChangesAsync();
+
+            await _auditLog.RegistrarEvento("VISITOR_CANCELLED", usuarioId, invitacionId: invitacionId,
+                metadata: $"{{\"invitacionVisitanteId\": \"{visitanteId}\", \"email\": \"{iv.EmailVisitante}\"}}");
+
+            return iv;
+        }
     }
 
     // DTOs de request

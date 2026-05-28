@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { obtenerRegistro, completarRegistro } from '../services/api'
+import { Button } from '../components/Button'
 
 export function RegistroPage() {
   const { token } = useParams()
@@ -37,7 +38,11 @@ export function RegistroPage() {
     setError('')
     try {
       const data = await completarRegistro(token, form)
-      setRegistro(data)
+      if (data.estado === 'Error') {
+        setError(data.errorMessage || 'Error al crear la reserva.')
+      } else {
+        setRegistro(data)
+      }
     } catch {
       setError('Error al enviar el formulario.')
     }
@@ -93,8 +98,21 @@ export function RegistroPage() {
       <main className="login-shell">
         <section className="login-panel">
           <h1>Registro completado</h1>
-          <p>Tu registro fue enviado exitosamente. Recibiras un QR por email para acceder al edificio.</p>
+          <p>Tu registro fue enviado exitosamente.</p>
           <VisitDetails registro={registro} />
+          {registro.qrCodeImage ? (
+            <div className="qr-section">
+              <p className="qr-label">Tu codigo QR para acceder al edificio:</p>
+              <img
+                src={`data:image/png;base64,${registro.qrCodeImage}`}
+                alt="Codigo QR de acceso"
+                className="qr-image"
+              />
+              <p className="qr-hint">Tambien recibiras este QR por email.</p>
+            </div>
+          ) : (
+            <p>Recibiras un QR por email para acceder al edificio.</p>
+          )}
         </section>
       </main>
     )
@@ -152,9 +170,9 @@ export function RegistroPage() {
 
           {error ? <p className="login-error">{error}</p> : null}
 
-          <button type="submit" className="login-button">
+          <Button variant="primary" type="submit" fullWidth>
             Confirmar registro
-          </button>
+          </Button>
         </form>
       </section>
     </main>
@@ -168,6 +186,8 @@ function VisitDetails({ registro }) {
       {registro.horaInicio ? <p><strong>Horario:</strong> {formatTime(registro.horaInicio)} - {formatTime(registro.horaFin)}</p> : null}
       {registro.destino ? <p><strong>Destino:</strong> {registro.destino}</p> : null}
       {registro.anfitrion ? <p><strong>Anfitrion:</strong> {registro.anfitrion}</p> : null}
+      {registro.titulo ? <p><strong>Evento:</strong> {registro.titulo}</p> : null}
+      {registro.descripcion ? <p><strong>Descripcion:</strong> {registro.descripcion}</p> : null}
       {registro.motivo ? <p><strong>Motivo:</strong> {registro.motivo}</p> : null}
     </div>
   )

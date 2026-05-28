@@ -614,6 +614,12 @@
   color: var(--text-h);
   font: inherit;
   box-sizing: border-box;
+  text-align: center;
+  text-align-last: center;
+}
+
+.field-select option {
+  text-align: center;
 }
 
 .field-select:focus {
@@ -671,6 +677,32 @@
   margin: 4px 0;
   font-size: 0.9rem;
   text-align: left;
+}
+
+.qr-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.qr-label {
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--heading);
+}
+
+.qr-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  border: 1px solid rgba(20, 31, 56, 0.12);
+  padding: 8px;
+  background: #fff;
+}
+
+.qr-hint {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .page-container {

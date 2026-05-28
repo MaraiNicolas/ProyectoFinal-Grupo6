@@ -56,6 +56,7 @@ export function HoyPage() {
             <thead>
               <tr>
                 <th>Estado</th>
+                <th>Titulo</th>
                 <th>Motivo</th>
                 <th>Horario</th>
                 <th>Destino</th>
@@ -71,6 +72,7 @@ export function HoyPage() {
                   onClick={() => navigate(`/invitaciones/${inv.guid}`)}
                 >
                   <td><span className={`status-badge status-${inv.estado.toLowerCase()}`}>{inv.estado}</span></td>
+                  <td>{inv.titulo || '-'}</td>
                   <td>{inv.motivo || '-'}</td>
                   <td>{formatTime(inv.horaInicio)} - {formatTime(inv.horaFin)}</td>
                   <td>{inv.destino?.nombre || '-'}</td>

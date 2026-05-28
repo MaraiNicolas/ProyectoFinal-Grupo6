@@ -58,12 +58,12 @@ export function DetalleInvitacionPage() {
         </div>
       </div>
 
-      {invitacion.motivo ? (
-        <div className="module-card" style={{ marginBottom: 20 }}>
-          <p className="card-label">Motivo</p>
-          <p>{invitacion.motivo}</p>
-        </div>
-      ) : null}
+      <div className="module-card" style={{ marginBottom: 20 }}>
+        <p className="card-label">Titulo</p>
+        <p>{invitacion.titulo}</p>
+        {invitacion.descripcion ? <p className="card-detail">{invitacion.descripcion}</p> : null}
+        {invitacion.motivo ? <><p className="card-label" style={{ marginTop: 12 }}>Motivo</p><p>{invitacion.motivo}</p></> : null}
+      </div>
 
       <section className="table-panel">
         <h2>Visitantes</h2>

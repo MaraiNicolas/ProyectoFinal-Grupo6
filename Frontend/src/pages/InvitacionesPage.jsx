@@ -54,6 +54,7 @@ export function InvitacionesPage() {
                 <th>Estado</th>
                 <th>Fecha</th>
                 <th>Horario</th>
+                <th>Titulo</th>
                 <th>Motivo</th>
                 <th>Destino</th>
                 <th>Visitantes</th>
@@ -69,6 +70,7 @@ export function InvitacionesPage() {
                   <td><span className={`status-badge status-${inv.estado.toLowerCase()}`}>{inv.estado}</span></td>
                   <td>{formatDate(inv.fecha)}</td>
                   <td>{formatTime(inv.horaInicio)} - {formatTime(inv.horaFin)}</td>
+                  <td>{inv.titulo || '-'}</td>
                   <td>{inv.motivo || '-'}</td>
                   <td>{inv.destino?.nombre || '-'}</td>
                   <td>{inv.visitantesCompletados}/{inv.cantidadVisitantes}</td>

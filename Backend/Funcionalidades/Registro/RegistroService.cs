@@ -194,6 +194,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
                 Anfitrion = invitacion.Usuario != null
                     ? $"{invitacion.Usuario.Nombre} {invitacion.Usuario.Apellido}"
                     : null,
+                Titulo = invitacion.Titulo,
+                Descripcion = invitacion.Descripcion,
                 Motivo = invitacion.Motivo,
                 EmailVisitante = iv.EmailVisitante,
                 FechaCompletado = iv.FechaCompletado,
@@ -227,6 +229,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
         public TimeSpan? HoraFin { get; set; }
         public string? Destino { get; set; }
         public string? Anfitrion { get; set; }
+        public string? Titulo { get; set; }
+        public string? Descripcion { get; set; }
         public string? Motivo { get; set; }
         public string? EmailVisitante { get; set; }
         public bool EsVisitanteExistente { get; set; }

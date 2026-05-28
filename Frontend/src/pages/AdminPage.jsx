@@ -57,6 +57,7 @@ function AdminInvitaciones() {
           <tr>
             <th>Estado</th>
             <th>Fecha</th>
+            <th>Titulo</th>
             <th>Motivo</th>
             <th>Anfitrion</th>
             <th>Destino</th>
@@ -68,6 +69,7 @@ function AdminInvitaciones() {
             <tr key={inv.guid}>
               <td><span className={`status-badge status-${inv.estado.toLowerCase()}`}>{inv.estado}</span></td>
               <td>{new Date(inv.fecha).toLocaleDateString('es-AR')}</td>
+              <td>{inv.titulo || '-'}</td>
               <td>{inv.motivo || '-'}</td>
               <td>{inv.usuario ? `${inv.usuario.nombre} ${inv.usuario.apellido}` : '-'}</td>
               <td>{inv.destino?.nombre || '-'}</td>

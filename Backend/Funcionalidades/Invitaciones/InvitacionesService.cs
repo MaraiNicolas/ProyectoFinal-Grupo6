@@ -26,7 +26,9 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                 HoraInicio = request.HoraInicio,
                 HoraFin = request.HoraFin,
                 BufferMinutos = request.BufferMinutos,
-                Motivo = request.Motivo,
+                Titulo = request.Titulo,
+                Descripcion = request.Descripcion,
+                Motivo = string.IsNullOrWhiteSpace(request.Motivo) ? request.Titulo : request.Motivo,
                 Estado = "Pendiente"
             };
 
@@ -99,6 +101,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
         public int BufferMinutos { get; set; } = 120;
+        public string Titulo { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
         public string? Motivo { get; set; }
         public List<VisitanteInvitacionRequest> Visitantes { get; set; } = new();
     }

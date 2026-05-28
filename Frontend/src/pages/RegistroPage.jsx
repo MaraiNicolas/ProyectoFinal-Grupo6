@@ -186,6 +186,8 @@ function VisitDetails({ registro }) {
       {registro.horaInicio ? <p><strong>Horario:</strong> {formatTime(registro.horaInicio)} - {formatTime(registro.horaFin)}</p> : null}
       {registro.destino ? <p><strong>Destino:</strong> {registro.destino}</p> : null}
       {registro.anfitrion ? <p><strong>Anfitrion:</strong> {registro.anfitrion}</p> : null}
+      {registro.titulo ? <p><strong>Evento:</strong> {registro.titulo}</p> : null}
+      {registro.descripcion ? <p><strong>Descripcion:</strong> {registro.descripcion}</p> : null}
       {registro.motivo ? <p><strong>Motivo:</strong> {registro.motivo}</p> : null}
     </div>
   )

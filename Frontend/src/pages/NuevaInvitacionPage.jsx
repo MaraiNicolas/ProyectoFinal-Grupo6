@@ -17,6 +17,8 @@ export function NuevaInvitacionPage() {
     horaInicio: '',
     horaFin: '',
     bufferMinutos: 120,
+    titulo: '',
+    descripcion: '',
     motivo: '',
   })
   const [visitantes, setVisitantes] = useState([{ email: searchParams.get('email') || '', telefono: '' }])
@@ -154,8 +156,18 @@ export function NuevaInvitacionPage() {
           </label>
 
           <label className="field">
+            <span>Titulo</span>
+            <input type="text" value={form.titulo} onChange={(e) => handleFormChange('titulo', e.target.value)} placeholder="Ej: Reunion de proyecto" required />
+          </label>
+
+          <label className="field">
+            <span>Descripcion (opcional)</span>
+            <input type="text" value={form.descripcion} onChange={(e) => handleFormChange('descripcion', e.target.value)} placeholder="Ej: Presentacion de avances" />
+          </label>
+
+          <label className="field">
             <span>Motivo (opcional)</span>
-            <input type="text" value={form.motivo} onChange={(e) => handleFormChange('motivo', e.target.value)} placeholder="Ej: Reunion de proyecto" />
+            <input type="text" value={form.motivo} onChange={(e) => handleFormChange('motivo', e.target.value)} placeholder="Si se deja vacio, se usa el titulo" />
           </label>
 
           <div className="visitantes-section">

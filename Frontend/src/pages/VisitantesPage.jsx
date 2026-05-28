@@ -73,7 +73,7 @@ export function VisitantesPage() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => navigate('/invitaciones/nueva')}
+                      onClick={() => navigate(`/invitaciones/nueva?email=${encodeURIComponent(v.email)}`)}
                     >
                       Re-invitar
                     </Button>

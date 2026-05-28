@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { crearInvitacion, obtenerDestinos, obtenerConfiguracion } from '../services/api'
 import { Button } from '../components/Button'
 
 export function NuevaInvitacionPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [destinos, setDestinos] = useState([])
   const [, setBufferDefault] = useState(120)
   const [error, setError] = useState('')
@@ -18,7 +19,7 @@ export function NuevaInvitacionPage() {
     bufferMinutos: 120,
     motivo: '',
   })
-  const [visitantes, setVisitantes] = useState([{ email: '', telefono: '' }])
+  const [visitantes, setVisitantes] = useState([{ email: searchParams.get('email') || '', telefono: '' }])
 
   useEffect(() => {
     obtenerDestinos().then((data) => {

@@ -15,6 +15,7 @@ using ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones;
 using ProyectoFinal_Grupo6.Api.Funcionalidades.Registro;
 using ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes;
 using System.Reflection;
+using Amazon.DynamoDBv2;
 
 namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
 {
@@ -49,6 +50,14 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
                         ServerCertificateCustomValidationCallback = (_, _, _, _) => true
                     });
             }
+            // DynamoDB Client
+            var dynamoDbServiceUrl = config.GetValue<string>("DynamoDB:ServiceUrl", "http://localhost:8000");
+            services.AddSingleton<IAmazonDynamoDB>(sp =>
+            {
+                var dynamoConfig = new AmazonDynamoDBConfig { ServiceURL = dynamoDbServiceUrl };
+                return new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
+            });
+
             // AuditLog: mock o real segun configuracion
             var useMockAudit = config.GetValue<bool>("AuditLog:UseMock", true);
             if (useMockAudit)
@@ -57,8 +66,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
             }
             else
             {
-                // TODO: services.AddScoped<IAuditLogService, DynamoDbAuditLogService>();
-                services.AddScoped<IAuditLogService, MockAuditLogService>();
+                services.AddScoped<IAuditLogService, DynamoDbAuditLogService>();
             }
 
            // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();

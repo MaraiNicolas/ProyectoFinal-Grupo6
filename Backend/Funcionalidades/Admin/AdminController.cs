@@ -1,3 +1,4 @@
+using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
@@ -101,6 +102,36 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
         {
             var version = await _hikCentral.ObtenerVersion();
             return Ok(new { version });
+        }
+
+        [HttpGet("debug/dynamodb-tables")]
+        public async Task<IActionResult> DebugDynamoDbTables()
+        {
+            try
+            {
+                var dynamoConfig = new AmazonDynamoDBConfig { ServiceURL = "http://localhost:8000" };
+                using var dynamoClient = new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
+
+                var tables = await dynamoClient.ListTablesAsync();
+                var auditLogsExists = tables.TableNames.Contains("AuditLogs");
+
+                if (auditLogsExists)
+                {
+                    var desc = await dynamoClient.DescribeTableAsync("AuditLogs");
+                    return Ok(new
+                    {
+                        tables = tables.TableNames,
+                        auditLogsStatus = desc.Table.TableStatus.Value,
+                        itemCount = desc.Table.ItemCount
+                    });
+                }
+
+                return Ok(new { tables = tables.TableNames, auditLogsExists = false });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }

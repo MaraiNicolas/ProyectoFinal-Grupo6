@@ -1,4 +1,5 @@
 using ProyectoFinal_Grupo6.Api.Dominio.Entidades;
+using ProyectoFinal_Grupo6.Api.Dominio.Enums;
 
 namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
 {
@@ -183,21 +184,21 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
             context.Set<AuditLog>().AddRange(
                 new AuditLog
                 {
-                    EventType = "INVITATION_CREATED",
+                    EventType = EventTypeEnum.INVITATION_CREATED.ToString(),
                     Timestamp = hoy.AddDays(-1).AddHours(10),
                     UsuarioId = empleado1.Guid,
                     InvitacionId = invitacion1.Guid
                 },
                 new AuditLog
                 {
-                    EventType = "FORM_COMPLETED",
+                    EventType = EventTypeEnum.FORM_COMPLETED.ToString(),
                     Timestamp = hoy.AddDays(-1).AddHours(14),
                     VisitanteId = visitante1.Guid,
                     InvitacionId = invitacion1.Guid
                 },
                 new AuditLog
                 {
-                    EventType = "RESERVATION_CREATED",
+                    EventType = EventTypeEnum.RESERVATION_CREATED.ToString(),
                     Timestamp = hoy.AddDays(-1).AddHours(14),
                     VisitanteId = visitante1.Guid,
                     InvitacionId = invitacion1.Guid,
@@ -205,14 +206,14 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 },
                 new AuditLog
                 {
-                    EventType = "INVITATION_CREATED",
+                    EventType = EventTypeEnum.INVITATION_CREATED.ToString(),
                     Timestamp = hoy.AddHours(8),
                     UsuarioId = empleado1.Guid,
                     InvitacionId = invitacion2.Guid
                 },
                 new AuditLog
                 {
-                    EventType = "INVITATION_EXPIRED",
+                    EventType = EventTypeEnum.INVITATION_EXPIRED.ToString(),
                     Timestamp = hoy,
                     InvitacionId = invitacion3.Guid
                 }

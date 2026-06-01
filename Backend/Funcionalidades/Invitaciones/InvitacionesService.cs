@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProyectoFinal_Grupo6.Api.Dominio.Entidades;
+using ProyectoFinal_Grupo6.Api.Dominio.Enums;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 
@@ -46,7 +47,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             _context.Set<Invitacion>().Add(invitacion);
             await _context.SaveChangesAsync();
 
-            await _auditLog.RegistrarEvento("INVITATION_CREATED", usuarioId, invitacionId: invitacion.Guid);
+            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId, invitacionId: invitacion.Guid);
 
             return invitacion;
         }
@@ -87,7 +88,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             invitacion.Estado = "Cancelada";
             await _context.SaveChangesAsync();
 
-            await _auditLog.RegistrarEvento("INVITATION_CANCELLED", usuarioId, invitacionId: invitacion.Guid);
+            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CANCELLED.ToString(), usuarioId, invitacionId: invitacion.Guid);
 
             return invitacion;
         }

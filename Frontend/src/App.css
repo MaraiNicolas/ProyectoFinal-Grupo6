@@ -605,6 +605,110 @@
 .admin-tab:hover { background: rgba(11, 93, 215, 0.06); }
 .admin-tab.active { background: #0d1b2a; color: #ffffff; }
 
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-input {
+  padding: 10px 14px;
+  border: 1px solid rgba(20, 31, 56, 0.16);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.92);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.filter-input:focus {
+  outline: 2px solid rgba(11, 93, 215, 0.22);
+  border-color: var(--accent);
+}
+
+.filter-input:first-child {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-date {
+  width: 160px;
+}
+
+.filter-select {
+  padding: 10px 14px;
+  border: 1px solid rgba(20, 31, 56, 0.16);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.92);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: 2px solid rgba(11, 93, 215, 0.22);
+  border-color: var(--accent);
+}
+
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(11, 93, 215, 0.1);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.filter-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(11, 93, 215, 0.2);
+  color: var(--accent);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.filter-chip-x:hover {
+  background: rgba(11, 93, 215, 0.35);
+}
+
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.sortable-th:hover {
+  color: var(--accent);
+}
+
+.sort-arrow {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
 .field-select {
   width: 100%;
   padding: 14px 16px;

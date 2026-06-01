@@ -289,17 +289,17 @@ function AdminAuditLogs() {
   if (loading) return <p className="empty-state">Cargando...</p>
 
   return (
-    <section className="table-panel" style={{ marginTop: 20 }}>
+    <section className="table-panel" style={{ marginTop: 20, overflowX: 'auto' }}>
       <table className="visitors-table">
-        <thead><tr><th>Evento</th><th>Fecha</th><th>Usuario</th><th>Visitante</th><th>Invitacion</th></tr></thead>
+        <thead><tr><th>Evento</th><th>Fecha</th><th>Usuario</th><th>Visitante</th><th>Evento (Titulo)</th></tr></thead>
         <tbody>
           {logs.map((log) => (
             <tr key={log.guid}>
               <td><strong>{log.eventType}</strong></td>
-              <td>{new Date(log.timestamp).toLocaleString('es-AR')}</td>
-              <td>{log.usuarioId || '-'}</td>
-              <td>{log.visitanteId || '-'}</td>
-              <td>{log.invitacionId ? log.invitacionId.substring(0, 8) + '...' : '-'}</td>
+              <td style={{ whiteSpace: 'nowrap' }}>{new Date(log.timestamp).toLocaleString('es-AR')}</td>
+              <td>{log.usuarioEmail || '-'}</td>
+              <td>{log.visitanteEmail || '-'}</td>
+              <td>{log.invitacionTitulo || '-'}</td>
             </tr>
           ))}
         </tbody>

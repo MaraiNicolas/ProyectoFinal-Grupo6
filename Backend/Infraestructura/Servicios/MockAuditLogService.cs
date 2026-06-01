@@ -16,7 +16,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
             _context = context;
         }
 
-        public async Task RegistrarEvento(string eventType, Guid? usuarioId = null, Guid? visitanteId = null, Guid? invitacionId = null, string? metadata = null)
+        public async Task RegistrarEvento(string eventType, Guid? usuarioId = null, Guid? visitanteId = null, Guid? invitacionId = null, string? usuarioEmail = null, string? visitanteEmail = null, string? invitacionTitulo = null, string? metadata = null)
         {
             _context.Set<AuditLog>().Add(new AuditLog
             {
@@ -24,6 +24,9 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
                 UsuarioId = usuarioId,
                 VisitanteId = visitanteId,
                 InvitacionId = invitacionId,
+                UsuarioEmail = usuarioEmail,
+                VisitanteEmail = visitanteEmail,
+                InvitacionTitulo = invitacionTitulo,
                 Metadata = metadata
             });
             await _context.SaveChangesAsync();

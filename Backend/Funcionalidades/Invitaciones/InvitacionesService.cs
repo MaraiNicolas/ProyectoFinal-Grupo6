@@ -47,7 +47,9 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             _context.Set<Invitacion>().Add(invitacion);
             await _context.SaveChangesAsync();
 
-            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId, invitacionId: invitacion.Guid);
+            var usuario = await _context.Set<Usuario>().FindAsync(usuarioId);
+            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId, invitacionId: invitacion.Guid,
+                usuarioEmail: usuario?.Email, invitacionTitulo: invitacion.Titulo);
 
             return invitacion;
         }
@@ -88,7 +90,9 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             invitacion.Estado = "Cancelada";
             await _context.SaveChangesAsync();
 
-            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CANCELLED.ToString(), usuarioId, invitacionId: invitacion.Guid);
+            var usuario = await _context.Set<Usuario>().FindAsync(usuarioId);
+            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CANCELLED.ToString(), usuarioId, invitacionId: invitacion.Guid,
+                usuarioEmail: usuario?.Email, invitacionTitulo: invitacion.Titulo);
 
             return invitacion;
         }
@@ -96,6 +100,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         public async Task<InvitacionVisitante?> CancelarVisitante(Guid invitacionId, Guid visitanteId, Guid usuarioId)
         {
             var iv = await _context.Set<InvitacionVisitante>()
+                .Include(v => v.Invitacion)
                 .FirstOrDefaultAsync(v => v.Guid == visitanteId && v.InvitacionId == invitacionId);
 
             if (iv == null)
@@ -104,7 +109,9 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             iv.EstadoFormulario = "Cancelado";
             await _context.SaveChangesAsync();
 
+            var usuario = await _context.Set<Usuario>().FindAsync(usuarioId);
             await _auditLog.RegistrarEvento("VISITOR_CANCELLED", usuarioId, invitacionId: invitacionId,
+                usuarioEmail: usuario?.Email, visitanteEmail: iv.EmailVisitante, invitacionTitulo: iv.Invitacion?.Titulo,
                 metadata: $"{{\"invitacionVisitanteId\": \"{visitanteId}\", \"email\": \"{iv.EmailVisitante}\"}}");
 
             return iv;

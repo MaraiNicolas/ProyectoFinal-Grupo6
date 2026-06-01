@@ -11,6 +11,9 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Entidades
         public Guid Guid { get; private set; }
         public string EventType { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public string? UsuarioEmail { get; set; }
+        public string? VisitanteEmail { get; set; }
+        public string? InvitacionTitulo { get; set; }
         public Guid? UsuarioId { get; set; }
         public Guid? VisitanteId { get; set; }
         public Guid? InvitacionId { get; set; }

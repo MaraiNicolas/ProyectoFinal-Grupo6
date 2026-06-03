@@ -43,6 +43,63 @@
   gap: 18px;
 }
 
+/* User select list (login) */
+.user-select-list {
+  display: grid;
+  gap: 10px;
+}
+
+.user-select-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 31, 56, 0.1);
+  border-radius: 14px;
+  background: rgba(20, 31, 56, 0.02);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.user-select-item:hover {
+  border-color: var(--accent);
+  background: rgba(11, 93, 215, 0.04);
+  box-shadow: 0 4px 12px rgba(11, 93, 215, 0.1);
+}
+
+.user-select-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.user-select-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-select-name {
+  font-weight: 600;
+  color: var(--text-h);
+  font-size: 0.95rem;
+}
+
+.user-select-email {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 .field {
   display: grid;
   gap: 8px;
@@ -257,6 +314,22 @@
   background: rgba(11, 93, 215, 0.1);
   color: var(--accent);
   font-weight: 700;
+}
+
+.navbar-user-btn {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(11, 93, 215, 0.1);
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.navbar-user-btn:hover {
+  background: rgba(11, 93, 215, 0.18);
 }
 
 .dashboard-content {

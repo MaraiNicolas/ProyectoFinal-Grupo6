@@ -3,22 +3,76 @@ import { useNavigate } from 'react-router-dom'
 import { obtenerInvitaciones } from '../services/api'
 import { Button } from '../components/Button'
 
+const QUICK_FILTERS = [
+  { key: 'todas', label: 'Todas' },
+  { key: 'hoy', label: 'Hoy' },
+  { key: 'semana', label: 'Esta semana' },
+  { key: 'mes', label: 'Este mes' },
+  { key: 'proximo', label: 'El mes que viene' },
+]
+
+function getDateRange(key) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  switch (key) {
+    case 'hoy':
+      return { desde: today, hasta: today }
+    case 'semana': {
+      const day = today.getDay()
+      const monday = new Date(today)
+      monday.setDate(today.getDate() - ((day + 6) % 7))
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      return { desde: monday, hasta: sunday }
+    }
+    case 'mes': {
+      const first = new Date(today.getFullYear(), today.getMonth(), 1)
+      const last = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      return { desde: first, hasta: last }
+    }
+    case 'proximo': {
+      const first = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+      const last = new Date(today.getFullYear(), today.getMonth() + 2, 0)
+      return { desde: first, hasta: last }
+    }
+    default:
+      return null
+  }
+}
+
 export function InvitacionesPage() {
   const navigate = useNavigate()
   const [invitaciones, setInvitaciones] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filtroFecha, setFiltroFecha] = useState('')
+  const [quickFilter, setQuickFilter] = useState('todas')
+  const [customDate, setCustomDate] = useState('')
 
   useEffect(() => {
-    let cancelled = false
-    obtenerInvitaciones(filtroFecha || undefined).then((data) => {
-      if (!cancelled) {
-        setInvitaciones(data || [])
-        setLoading(false)
-      }
+    obtenerInvitaciones().then((data) => {
+      setInvitaciones(data || [])
+      setLoading(false)
     })
-    return () => { cancelled = true }
-  }, [filtroFecha])
+  }, [])
+
+  const filtered = (() => {
+    if (customDate) {
+      const selected = new Date(customDate)
+      selected.setHours(0, 0, 0, 0)
+      return invitaciones.filter((inv) => {
+        const fecha = new Date(inv.fecha)
+        fecha.setHours(0, 0, 0, 0)
+        return fecha.getTime() === selected.getTime()
+      })
+    }
+    const range = getDateRange(quickFilter)
+    if (!range) return invitaciones
+    return invitaciones.filter((inv) => {
+      const fecha = new Date(inv.fecha)
+      fecha.setHours(0, 0, 0, 0)
+      return fecha >= range.desde && fecha <= range.hasta
+    })
+  })()
 
   return (
     <section className="dashboard-content visitors-view">
@@ -31,21 +85,29 @@ export function InvitacionesPage() {
         </Button>
       </div>
 
-      <section className="filters-panel">
-        <label className="field">
-          <span>Filtrar por fecha</span>
-          <input
-            type="date"
-            value={filtroFecha}
-            onChange={(event) => setFiltroFecha(event.target.value)}
-          />
-        </label>
+      <section className="filters-panel" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {QUICK_FILTERS.map((f) => (
+          <Button
+            key={f.key}
+            variant={quickFilter === f.key && !customDate ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => { setQuickFilter(f.key); setCustomDate('') }}
+          >
+            {f.label}
+          </Button>
+        ))}
+        <input
+          type="date"
+          value={customDate}
+          onChange={(e) => { setCustomDate(e.target.value); setQuickFilter('') }}
+          style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(20,31,56,0.16)', fontSize: '0.85rem' }}
+        />
       </section>
 
       <section className="table-panel">
         {loading ? (
           <p className="empty-state">Cargando...</p>
-        ) : invitaciones.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <p className="empty-state">No hay invitaciones.</p>
         ) : (
           <table className="visitors-table">
@@ -61,7 +123,7 @@ export function InvitacionesPage() {
               </tr>
             </thead>
             <tbody>
-              {invitaciones.map((inv) => (
+              {filtered.map((inv) => (
                 <tr
                   key={inv.guid}
                   style={{ cursor: 'pointer' }}

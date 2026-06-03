@@ -77,40 +77,47 @@ export function DetalleInvitacionPage() {
   return (
     <section className="dashboard-content">
       <div className="content-header">
-        <div>
-          <h1 style={{ fontSize: '1.75rem', margin: 0 }}>{invitacion.titulo}</h1>
-          {invitacion.descripcion && <p style={{ color: '#666', marginTop: 4 }}>{invitacion.descripcion}</p>}
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Button variant="secondary" onClick={() => navigate('/invitaciones')}>Volver</Button>
+        </div>
+        <div>
           {canAddVisitors && (
             <Button variant="danger" onClick={() => setShowConfirm(true)}>Cancelar invitacion</Button>
           )}
         </div>
       </div>
 
-      <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: 20 }}>
-        <div className="module-card">
-          <p className="card-label">Estado de formularios</p>
-          <h2>{estadoFormularios(invitacion)}</h2>
+      <div className="detalle-hero">
+        <div className="detalle-hero-main">
+          <h1 className="detalle-titulo">{invitacion.titulo}</h1>
+          {invitacion.descripcion && <p className="detalle-descripcion">{invitacion.descripcion}</p>}
+          {invitacion.motivo && invitacion.motivo !== invitacion.titulo && (
+            <p className="detalle-motivo">Motivo: {invitacion.motivo}</p>
+          )}
         </div>
-        <div className="module-card">
-          <p className="card-label">Fecha</p>
-          <h2>{formatDate(invitacion.fecha)}</h2>
-          <p>{formatTime(invitacion.horaInicio)} - {formatTime(invitacion.horaFin)}</p>
-          <p className="card-detail">Buffer: {invitacion.bufferMinutos} min</p>
+        <div className="detalle-estado">
+          {estadoFormularios(invitacion)}
         </div>
-        <div className="module-card">
-          <p className="card-label">Destino</p>
-          <h2>{invitacion.destino?.nombre || '-'}</h2>
-          <p>{invitacion.destino?.descripcion || ''}</p>
+      </div>
+
+      <div className="detalle-info-grid">
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Fecha</span>
+          <span className="detalle-info-value">{formatDate(invitacion.fecha)}</span>
         </div>
-        {invitacion.motivo && (
-          <div className="module-card">
-            <p className="card-label">Motivo</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 500 }}>{invitacion.motivo}</h2>
-          </div>
-        )}
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Horario</span>
+          <span className="detalle-info-value">{formatTime(invitacion.horaInicio)} - {formatTime(invitacion.horaFin)}</span>
+        </div>
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Destino</span>
+          <span className="detalle-info-value">{invitacion.destino?.nombre || '-'}</span>
+          {invitacion.destino?.descripcion && <span className="detalle-info-sub">{invitacion.destino.descripcion}</span>}
+        </div>
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Buffer</span>
+          <span className="detalle-info-value">{invitacion.bufferMinutos} min</span>
+        </div>
       </div>
 
       <section className="table-panel">

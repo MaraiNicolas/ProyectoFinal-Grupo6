@@ -186,6 +186,8 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 {
                     EventType = EventTypeEnum.INVITATION_CREATED.ToString(),
                     Timestamp = hoy.AddDays(-1).AddHours(10),
+                    UsuarioEmail = empleado1.Email,
+                    InvitacionTitulo = invitacion1.Titulo,
                     UsuarioId = empleado1.Guid,
                     InvitacionId = invitacion1.Guid
                 },
@@ -193,6 +195,10 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 {
                     EventType = EventTypeEnum.FORM_COMPLETED.ToString(),
                     Timestamp = hoy.AddDays(-1).AddHours(14),
+                    UsuarioEmail = empleado1.Email,
+                    VisitanteEmail = visitante1.Email,
+                    InvitacionTitulo = invitacion1.Titulo,
+                    UsuarioId = empleado1.Guid,
                     VisitanteId = visitante1.Guid,
                     InvitacionId = invitacion1.Guid
                 },
@@ -200,6 +206,10 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 {
                     EventType = EventTypeEnum.RESERVATION_CREATED.ToString(),
                     Timestamp = hoy.AddDays(-1).AddHours(14),
+                    UsuarioEmail = empleado1.Email,
+                    VisitanteEmail = visitante1.Email,
+                    InvitacionTitulo = invitacion1.Titulo,
+                    UsuarioId = empleado1.Guid,
                     VisitanteId = visitante1.Guid,
                     InvitacionId = invitacion1.Guid,
                     Metadata = "{\"hikCentralReservationId\": \"MOCK-RES-001\"}"
@@ -208,6 +218,8 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 {
                     EventType = EventTypeEnum.INVITATION_CREATED.ToString(),
                     Timestamp = hoy.AddHours(8),
+                    UsuarioEmail = empleado1.Email,
+                    InvitacionTitulo = invitacion2.Titulo,
                     UsuarioId = empleado1.Guid,
                     InvitacionId = invitacion2.Guid
                 },
@@ -215,6 +227,9 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
                 {
                     EventType = EventTypeEnum.INVITATION_EXPIRED.ToString(),
                     Timestamp = hoy,
+                    UsuarioEmail = empleado2.Email,
+                    InvitacionTitulo = invitacion3.Titulo,
+                    UsuarioId = empleado2.Guid,
                     InvitacionId = invitacion3.Guid
                 }
             );

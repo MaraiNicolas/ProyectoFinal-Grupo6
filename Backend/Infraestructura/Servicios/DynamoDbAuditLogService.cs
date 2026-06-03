@@ -18,7 +18,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
             _dynamoClient = dynamoClient;
         }
 
-        public async Task RegistrarEvento(string eventType, Guid? usuarioId = null, Guid? visitanteId = null, Guid? invitacionId = null, string? metadata = null)
+        public async Task RegistrarEvento(string eventType, Guid? usuarioId = null, Guid? visitanteId = null, Guid? invitacionId = null, string? usuarioEmail = null, string? visitanteEmail = null, string? invitacionTitulo = null, string? metadata = null)
         {
             var item = new Dictionary<string, AttributeValue>
             {
@@ -26,6 +26,15 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
                 ["EventType"] = new AttributeValue { S = eventType },
                 ["Timestamp"] = new AttributeValue { N = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() }
             };
+
+            if (!string.IsNullOrWhiteSpace(usuarioEmail))
+                item["UsuarioEmail"] = new AttributeValue { S = usuarioEmail };
+
+            if (!string.IsNullOrWhiteSpace(visitanteEmail))
+                item["VisitanteEmail"] = new AttributeValue { S = visitanteEmail };
+
+            if (!string.IsNullOrWhiteSpace(invitacionTitulo))
+                item["InvitacionTitulo"] = new AttributeValue { S = invitacionTitulo };
 
             if (usuarioId.HasValue)
                 item["UsuarioId"] = new AttributeValue { S = usuarioId.Value.ToString() };
@@ -144,9 +153,12 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
             var logs = items.Select(item => new AuditLog
             {
                 EventType = item.ContainsKey("EventType") ? item["EventType"].S : string.Empty,
-                Timestamp = item.ContainsKey("Timestamp") 
-                    ? DateTimeOffset.FromUnixTimeSeconds(long.Parse(item["Timestamp"].N)).DateTime 
+                Timestamp = item.ContainsKey("Timestamp")
+                    ? DateTimeOffset.FromUnixTimeSeconds(long.Parse(item["Timestamp"].N)).DateTime
                     : DateTime.UtcNow,
+                UsuarioEmail = item.ContainsKey("UsuarioEmail") ? item["UsuarioEmail"].S : null,
+                VisitanteEmail = item.ContainsKey("VisitanteEmail") ? item["VisitanteEmail"].S : null,
+                InvitacionTitulo = item.ContainsKey("InvitacionTitulo") ? item["InvitacionTitulo"].S : null,
                 UsuarioId = item.ContainsKey("UsuarioId") ? Guid.Parse(item["UsuarioId"].S) : null,
                 VisitanteId = item.ContainsKey("VisitanteId") ? Guid.Parse(item["VisitanteId"].S) : null,
                 InvitacionId = item.ContainsKey("InvitacionId") ? Guid.Parse(item["InvitacionId"].S) : null,

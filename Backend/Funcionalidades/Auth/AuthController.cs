@@ -13,6 +13,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Auth
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
         // Usuarios y passwords hardcodeados para MVP
         private static readonly Dictionary<string, string> Credenciales = new()
@@ -22,9 +23,10 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Auth
             { "empleado2@empresa.com", "emp123" }
         };
 
-        public AuthController(ApplicationDbContext context)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpPost("login")]
@@ -60,7 +62,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Auth
 
         private string GenerarToken(Dominio.Entidades.Usuario usuario)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("ProyectoFinal-Grupo6-ClaveSecreta-MVP-2026!"));
+            var jwtKey = _configuration["Jwt:Key"]!;
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -71,8 +74,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Auth
             };
 
             var token = new JwtSecurityToken(
-                issuer: "ProyectoFinal-Grupo6",
-                audience: "ProyectoFinal-Grupo6",
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddHours(8),
                 signingCredentials: credentials

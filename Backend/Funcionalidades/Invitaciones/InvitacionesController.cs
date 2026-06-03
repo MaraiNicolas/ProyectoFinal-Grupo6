@@ -48,7 +48,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         [HttpGet]
         public async Task<IActionResult> Listar([FromQuery] DateTime? fecha)
         {
-            var invitaciones = await _service.ObtenerInvitaciones(fecha);
+            var usuarioId = ObtenerUsuarioId();
+            var invitaciones = await _service.ObtenerInvitaciones(fecha, usuarioId);
 
             return Ok(invitaciones.Select(i => new
             {
@@ -111,6 +112,26 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                 return NotFound(new { mensaje = "Invitacion no encontrada" });
 
             return Ok(new { invitacion.Guid, invitacion.Estado });
+        }
+
+        [HttpPost("{id}/visitantes")]
+        public async Task<IActionResult> AgregarVisitantes(Guid id, [FromBody] List<AgregarVisitanteRequest> visitantes)
+        {
+            var usuarioId = ObtenerUsuarioId();
+            var agregados = await _service.AgregarVisitantes(id, visitantes.Select(v => new VisitanteInvitacionRequest { Email = v.Email, Telefono = v.Telefono }).ToList(), usuarioId);
+
+            if (agregados == null)
+                return NotFound(new { mensaje = "Invitacion no encontrada o no se pueden agregar visitantes" });
+
+            return Ok(agregados.Select(v => new
+            {
+                v.Guid,
+                v.Token,
+                v.EmailVisitante,
+                v.TelefonoVisitante,
+                v.EstadoFormulario,
+                link = $"/registro/{v.Token}"
+            }));
         }
 
         [HttpPut("{id}/visitantes/{visitanteId}/cancelar")]

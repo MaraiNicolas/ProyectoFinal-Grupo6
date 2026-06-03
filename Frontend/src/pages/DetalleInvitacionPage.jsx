@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { obtenerInvitacion, cancelarInvitacion, cancelarVisitante } from '../services/api'
+import { obtenerInvitacion, cancelarInvitacion, cancelarVisitante, agregarVisitantes } from '../services/api'
 import { Button } from '../components/Button'
+import { estadoFormularios, estadoVisitante } from '../components/EstadoHelpers'
+import { BuscadorVisitantes } from '../components/BuscadorVisitantes'
 
 export function DetalleInvitacionPage() {
   const { id } = useParams()
@@ -11,6 +13,12 @@ export function DetalleInvitacionPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [cancelVisitanteId, setCancelVisitanteId] = useState(null)
 
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [nuevosVisitantes, setNuevosVisitantes] = useState([{ email: '', telefono: '' }])
+  const [addError, setAddError] = useState('')
+
+  const reload = () => obtenerInvitacion(id).then(setInvitacion)
+
   useEffect(() => {
     obtenerInvitacion(id).then((data) => {
       setInvitacion(data)
@@ -18,62 +26,139 @@ export function DetalleInvitacionPage() {
     })
   }, [id])
 
+  const allEmails = [
+    ...(invitacion?.visitantes?.map((v) => v.emailVisitante?.toLowerCase()) || []),
+    ...nuevosVisitantes.map((v) => v.email.toLowerCase()),
+  ]
+
+  const addFromSearch = (visitante) => {
+    if (allEmails.includes(visitante.email.toLowerCase())) return
+
+    const emptyIndex = nuevosVisitantes.findIndex((v) => !v.email.trim())
+    if (emptyIndex >= 0) {
+      setNuevosVisitantes((current) => current.map((v, i) =>
+        i === emptyIndex ? { email: visitante.email, telefono: visitante.telefono || '' } : v
+      ))
+    } else {
+      setNuevosVisitantes((current) => [...current, { email: visitante.email, telefono: visitante.telefono || '' }])
+    }
+  }
+
   const handleCancelar = async () => {
     await cancelarInvitacion(id)
     setShowConfirm(false)
-    obtenerInvitacion(id).then(setInvitacion)
+    reload()
   }
 
   const handleCancelarVisitante = async () => {
     await cancelarVisitante(id, cancelVisitanteId)
     setCancelVisitanteId(null)
-    obtenerInvitacion(id).then(setInvitacion)
+    reload()
+  }
+
+  const handleAgregar = async () => {
+    setAddError('')
+    const validos = nuevosVisitantes.filter((v) => v.email.trim())
+    if (validos.length === 0) {
+      setAddError('Agrega al menos un visitante con email.')
+      return
+    }
+    await agregarVisitantes(id, validos)
+    setNuevosVisitantes([{ email: '', telefono: '' }])
+    setShowAddForm(false)
+    reload()
   }
 
   if (loading) return <section className="dashboard-content"><p className="empty-state">Cargando...</p></section>
   if (!invitacion) return <section className="dashboard-content"><p className="empty-state">Invitacion no encontrada.</p></section>
 
+  const canAddVisitors = invitacion.estado !== 'Cancelada' && invitacion.estado !== 'Expirada'
+
   return (
     <section className="dashboard-content">
       <div className="content-header">
-        <div className="dashboard-copy">
-          <h1>Detalle de Invitacion</h1>
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Button variant="secondary" onClick={() => navigate('/invitaciones')}>Volver</Button>
-          {invitacion.estado !== 'Cancelada' && invitacion.estado !== 'Expirada' ? (
+        </div>
+        <div>
+          {canAddVisitors && (
             <Button variant="danger" onClick={() => setShowConfirm(true)}>Cancelar invitacion</Button>
-          ) : null}
+          )}
         </div>
       </div>
 
-      <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 20 }}>
-        <div className="module-card">
-          <p className="card-label">Estado</p>
-          <h2><span className={`status-badge status-${invitacion.estado.toLowerCase()}`}>{invitacion.estado}</span></h2>
+      <div className="detalle-hero">
+        <div className="detalle-hero-main">
+          <h1 className="detalle-titulo">{invitacion.titulo}</h1>
+          {invitacion.descripcion && <p className="detalle-descripcion">{invitacion.descripcion}</p>}
+          {invitacion.motivo && invitacion.motivo !== invitacion.titulo && (
+            <p className="detalle-motivo">Motivo: {invitacion.motivo}</p>
+          )}
         </div>
-        <div className="module-card">
-          <p className="card-label">Fecha y horario</p>
-          <h2>{formatDate(invitacion.fecha)}</h2>
-          <p>{formatTime(invitacion.horaInicio)} - {formatTime(invitacion.horaFin)}</p>
-          <p className="card-detail">Buffer: {invitacion.bufferMinutos} min</p>
-        </div>
-        <div className="module-card">
-          <p className="card-label">Destino</p>
-          <h2>{invitacion.destino?.nombre || '-'}</h2>
-          <p>{invitacion.destino?.descripcion || ''}</p>
+        <div className="detalle-estado">
+          {estadoFormularios(invitacion)}
         </div>
       </div>
 
-      <div className="module-card" style={{ marginBottom: 20 }}>
-        <p className="card-label">Titulo</p>
-        <p>{invitacion.titulo}</p>
-        {invitacion.descripcion ? <p className="card-detail">{invitacion.descripcion}</p> : null}
-        {invitacion.motivo ? <><p className="card-label" style={{ marginTop: 12 }}>Motivo</p><p>{invitacion.motivo}</p></> : null}
+      <div className="detalle-info-grid">
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Fecha</span>
+          <span className="detalle-info-value">{formatDate(invitacion.fecha)}</span>
+        </div>
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Horario</span>
+          <span className="detalle-info-value">{formatTime(invitacion.horaInicio)} - {formatTime(invitacion.horaFin)}</span>
+        </div>
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Destino</span>
+          <span className="detalle-info-value">{invitacion.destino?.nombre || '-'}</span>
+          {invitacion.destino?.descripcion && <span className="detalle-info-sub">{invitacion.destino.descripcion}</span>}
+        </div>
+        <div className="detalle-info-item">
+          <span className="detalle-info-label">Buffer</span>
+          <span className="detalle-info-value">{invitacion.bufferMinutos} min</span>
+        </div>
       </div>
 
       <section className="table-panel">
-        <h2>Visitantes</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h2 style={{ margin: 0 }}>Visitantes</h2>
+          {canAddVisitors && !showAddForm && (
+            <Button variant="primary" size="sm" onClick={() => setShowAddForm(true)}>Agregar visitante</Button>
+          )}
+        </div>
+
+        {showAddForm && (
+          <div style={{ marginBottom: 20, padding: 16, background: 'rgba(20,31,56,0.02)', borderRadius: 12 }}>
+            <BuscadorVisitantes onSelect={addFromSearch} excludeEmails={allEmails} />
+
+            {nuevosVisitantes.map((v, i) => (
+              <div key={i} className="visitante-row">
+                <label className="field">
+                  <span>Email</span>
+                  <input type="email" value={v.email} onChange={(e) => setNuevosVisitantes((c) => c.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} placeholder="visitante@mail.com" />
+                </label>
+                <label className="field">
+                  <span>Telefono (opcional)</span>
+                  <input type="tel" value={v.telefono} onChange={(e) => setNuevosVisitantes((c) => c.map((x, j) => j === i ? { ...x, telefono: e.target.value } : x))} placeholder="+5491100001111" />
+                </label>
+                {nuevosVisitantes.length > 1 && (
+                  <Button variant="danger" size="sm" onClick={() => setNuevosVisitantes((c) => c.filter((_, j) => j !== i))} style={{ alignSelf: 'end' }}>Quitar</Button>
+                )}
+              </div>
+            ))}
+
+            {addError && <p className="login-error">{addError}</p>}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <Button variant="secondary" size="sm" onClick={() => setNuevosVisitantes((c) => [...c, { email: '', telefono: '' }])}>Agregar otro</Button>
+              <div style={{ flex: 1 }} />
+              <Button variant="secondary" size="sm" onClick={() => { setShowAddForm(false); setNuevosVisitantes([{ email: '', telefono: '' }]) }}>Cancelar</Button>
+              <Button variant="primary" size="sm" onClick={handleAgregar}>Guardar</Button>
+            </div>
+          </div>
+        )}
+
         <table className="visitors-table">
           <thead>
             <tr>
@@ -90,7 +175,7 @@ export function DetalleInvitacionPage() {
               <tr key={v.guid}>
                 <td>{v.emailVisitante}</td>
                 <td>{v.telefonoVisitante || '-'}</td>
-                <td><span className={`status-badge status-${v.estadoFormulario.toLowerCase()}`}>{v.estadoFormulario}</span></td>
+                <td>{estadoVisitante(v)}</td>
                 <td>{v.visitante ? `${v.visitante.nombre} ${v.visitante.apellido}` : '-'}</td>
                 <td>{v.fechaCompletado ? new Date(v.fechaCompletado).toLocaleString('es-AR') : '-'}</td>
                 <td>
@@ -102,7 +187,7 @@ export function DetalleInvitacionPage() {
                     >
                       Copiar link
                     </Button>
-                    {v.estadoFormulario !== 'Cancelado' && invitacion.estado !== 'Cancelada' ? (
+                    {v.estadoFormulario !== 'Cancelado' && invitacion.estado !== 'Cancelada' && (
                       <Button
                         variant="danger"
                         size="sm"
@@ -110,7 +195,7 @@ export function DetalleInvitacionPage() {
                       >
                         Cancelar
                       </Button>
-                    ) : null}
+                    )}
                   </div>
                 </td>
               </tr>
@@ -119,7 +204,7 @@ export function DetalleInvitacionPage() {
         </table>
       </section>
 
-      {cancelVisitanteId ? (
+      {cancelVisitanteId && (
         <div className="confirm-overlay" onClick={() => setCancelVisitanteId(null)}>
           <section className="confirm-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h2>Cancelar visitante</h2>
@@ -130,9 +215,9 @@ export function DetalleInvitacionPage() {
             </div>
           </section>
         </div>
-      ) : null}
+      )}
 
-      {showConfirm ? (
+      {showConfirm && (
         <div className="confirm-overlay" onClick={() => setShowConfirm(false)}>
           <section className="confirm-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h2>Cancelar invitacion</h2>
@@ -143,7 +228,7 @@ export function DetalleInvitacionPage() {
             </div>
           </section>
         </div>
-      ) : null}
+      )}
     </section>
   )
 }

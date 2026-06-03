@@ -169,8 +169,14 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             await _context.SaveChangesAsync();
 
             // Registrar eventos de auditoria
-            await _auditLog.RegistrarEvento("FORM_COMPLETED", visitanteId: visitante.Guid, invitacionId: invitacion.Guid);
-            await _auditLog.RegistrarEvento("RESERVATION_CREATED", visitanteId: visitante.Guid, invitacionId: invitacion.Guid,
+            var empleado = await _context.Set<Usuario>().FindAsync(invitacion.UsuarioId);
+            var empleadoEmail = empleado?.Email;
+            var titulo = invitacion.Titulo;
+
+            await _auditLog.RegistrarEvento("FORM_COMPLETED", usuarioId: invitacion.UsuarioId, visitanteId: visitante.Guid, invitacionId: invitacion.Guid,
+                usuarioEmail: empleadoEmail, visitanteEmail: iv.EmailVisitante, invitacionTitulo: titulo);
+            await _auditLog.RegistrarEvento("RESERVATION_CREATED", usuarioId: invitacion.UsuarioId, visitanteId: visitante.Guid, invitacionId: invitacion.Guid,
+                usuarioEmail: empleadoEmail, visitanteEmail: iv.EmailVisitante, invitacionTitulo: titulo,
                 metadata: $"{{\"hikCentralReservationId\": \"{iv.HikCentralReservationId}\", \"hikCentralVisitorId\": \"{visitante.HikCentralVisitorId}\"}}");
 
             // Recargar con propiedades de navegacion

@@ -1133,10 +1133,54 @@
 }
 
 /* Week day quick-pick */
+.weekday-picker-wrapper {
+  margin-bottom: 10px;
+}
+
+.weekday-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.weekday-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 140px;
+  text-align: center;
+}
+
+.weekday-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(20, 31, 56, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 1.1rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.weekday-arrow:hover:not(:disabled) {
+  background: rgba(11, 93, 215, 0.08);
+  border-color: rgba(11, 93, 215, 0.25);
+}
+
+.weekday-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .weekday-picker {
   display: flex;
   gap: 6px;
-  margin-bottom: 10px;
 }
 
 .weekday-btn {

@@ -183,7 +183,7 @@ export function NuevaInvitacionPage() {
 
       {showWizard && (
         <div className="wizard-overlay" onClick={(e) => { if (e.target === e.currentTarget) { setShowWizard(false); setWizardDone(true) } }}>
-          <div className="wizard-modal">
+          <div className="wizard-modal" onKeyDown={(e) => { if (e.key === 'Enter' && canAdvance()) { e.preventDefault(); handleNext() } }}>
             <div className="wizard-progress">
               {WIZARD_STEPS.map((s, i) => (
                 <div key={s.key} className={`wizard-dot ${i === wizardStep ? 'active' : ''} ${i < wizardStep ? 'done' : ''}`} />
@@ -205,7 +205,6 @@ export function NuevaInvitacionPage() {
                     onChange={(e) => handleFormChange('titulo', e.target.value)}
                     placeholder="Ej: Reunion de proyecto"
                     autoFocus
-                    onKeyDown={(e) => { if (e.key === 'Enter' && canAdvance()) { e.preventDefault(); handleNext() } }}
                   />
                 </label>
               )}
@@ -247,6 +246,10 @@ export function NuevaInvitacionPage() {
               {WIZARD_STEPS[wizardStep].key === 'visitantes' && (
                 <div>
                   <BuscadorVisitantes onSelect={addFromSearch} excludeEmails={visitantes.map((v) => v.email)} />
+
+                  <label className="field" style={{ marginTop: 4 }}>
+                    <span>Agregar nuevo visitante</span>
+                  </label>
 
                   {visitantes.map((v, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, alignItems: 'end', marginBottom: 8 }}>
@@ -392,12 +395,21 @@ export function NuevaInvitacionPage() {
 const DAY_LABELS = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom']
 
 function WeekDayPicker({ selectedDate, onSelect }) {
+  const [weekOffset, setWeekOffset] = useState(0)
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayDay = today.getDay()
   const mondayOffset = todayDay === 0 ? -6 : 1 - todayDay
   const monday = new Date(today)
-  monday.setDate(today.getDate() + mondayOffset)
+  monday.setDate(today.getDate() + mondayOffset + weekOffset * 7)
+
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+
+  const weekLabel = weekOffset === 0
+    ? 'Esta semana'
+    : `Semana del ${monday.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}`
 
   const days = DAY_LABELS.map((label, i) => {
     const date = new Date(monday)
@@ -410,18 +422,38 @@ function WeekDayPicker({ selectedDate, onSelect }) {
   })
 
   return (
-    <div className="weekday-picker">
-      {days.map((d) => (
+    <div className="weekday-picker-wrapper">
+      <div className="weekday-picker-header">
         <button
-          key={d.dateStr}
           type="button"
-          className={`weekday-btn${d.isToday ? ' today' : ''}${d.isSelected ? ' selected' : ''}${d.isPast ? ' past' : ''}`}
-          disabled={d.isPast}
-          onClick={() => onSelect(d.dateStr)}
+          className="weekday-arrow"
+          disabled={weekOffset === 0}
+          onClick={() => setWeekOffset((w) => w - 1)}
         >
-          {d.label}
+          ‹
         </button>
-      ))}
+        <span className="weekday-label">{weekLabel}</span>
+        <button
+          type="button"
+          className="weekday-arrow"
+          onClick={() => setWeekOffset((w) => w + 1)}
+        >
+          ›
+        </button>
+      </div>
+      <div className="weekday-picker">
+        {days.map((d) => (
+          <button
+            key={d.dateStr}
+            type="button"
+            className={`weekday-btn${d.isToday ? ' today' : ''}${d.isSelected ? ' selected' : ''}${d.isPast ? ' past' : ''}`}
+            disabled={d.isPast}
+            onClick={() => onSelect(d.dateStr)}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

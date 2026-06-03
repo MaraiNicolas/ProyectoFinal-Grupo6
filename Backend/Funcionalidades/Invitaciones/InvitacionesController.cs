@@ -114,6 +114,26 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return Ok(new { invitacion.Guid, invitacion.Estado });
         }
 
+        [HttpPost("{id}/visitantes")]
+        public async Task<IActionResult> AgregarVisitantes(Guid id, [FromBody] List<AgregarVisitanteRequest> visitantes)
+        {
+            var usuarioId = ObtenerUsuarioId();
+            var agregados = await _service.AgregarVisitantes(id, visitantes.Select(v => new VisitanteInvitacionRequest { Email = v.Email, Telefono = v.Telefono }).ToList(), usuarioId);
+
+            if (agregados == null)
+                return NotFound(new { mensaje = "Invitacion no encontrada o no se pueden agregar visitantes" });
+
+            return Ok(agregados.Select(v => new
+            {
+                v.Guid,
+                v.Token,
+                v.EmailVisitante,
+                v.TelefonoVisitante,
+                v.EstadoFormulario,
+                link = $"/registro/{v.Token}"
+            }));
+        }
+
         [HttpPut("{id}/visitantes/{visitanteId}/cancelar")]
         public async Task<IActionResult> CancelarVisitante(Guid id, Guid visitanteId)
         {

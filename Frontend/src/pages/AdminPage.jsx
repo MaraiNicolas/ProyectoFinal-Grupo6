@@ -6,22 +6,9 @@ import {
   obtenerAuditLogs, obtenerTodasInvitaciones, getUsuarioActual,
 } from '../services/api'
 import { Button } from '../components/Button'
+import { estadoFormularios } from '../components/EstadoHelpers'
 
 const TABS = ['Invitaciones', 'Usuarios', 'Destinos', 'Configuracion', 'Audit Logs']
-
-function estadoFormularios(inv) {
-  if (inv.estado === 'Cancelada') {
-    return <span className="status-badge status-cancelada">Cancelada</span>
-  }
-  if (inv.estado === 'Expirada') {
-    return <span className="status-badge status-expirada">Evento expirado</span>
-  }
-  const pendientes = (inv.cantidadVisitantes || 0) - (inv.visitantesCompletados || 0)
-  if (pendientes === 0) {
-    return <span className="status-badge status-activa">Completados</span>
-  }
-  return <span className="status-badge status-pendiente">{pendientes} pendientes</span>
-}
 
 function FilterChips({ filters, onRemove }) {
   const entries = Object.entries(filters).filter(([, v]) => v !== '' && v !== null)

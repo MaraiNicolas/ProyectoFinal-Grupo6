@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { obtenerInvitaciones } from '../services/api'
 import { Button } from '../components/Button'
+import { estadoFormularios } from '../components/EstadoHelpers'
 
 const QUICK_FILTERS = [
   { key: 'todas', label: 'Todas' },
@@ -144,20 +145,6 @@ export function InvitacionesPage() {
       </section>
     </section>
   )
-}
-
-function estadoFormularios(inv) {
-  if (inv.estado === 'Cancelada') {
-    return <span className="status-badge status-cancelada">Cancelada</span>
-  }
-  if (inv.estado === 'Expirada') {
-    return <span className="status-badge status-expirada">Evento expirado</span>
-  }
-  const pendientes = (inv.cantidadVisitantes || 0) - (inv.visitantesCompletados || 0)
-  if (pendientes === 0) {
-    return <span className="status-badge status-activa">Completados</span>
-  }
-  return <span className="status-badge status-pendiente">{pendientes} pendientes</span>
 }
 
 function formatDate(dateStr) {

@@ -100,6 +100,37 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return invitacion;
         }
 
+        public async Task<List<InvitacionVisitante>?> AgregarVisitantes(Guid invitacionId, List<VisitanteInvitacionRequest> nuevosVisitantes, Guid usuarioId)
+        {
+            var invitacion = await _context.Set<Invitacion>()
+                .Include(i => i.Visitantes)
+                .FirstOrDefaultAsync(i => i.Guid == invitacionId);
+
+            if (invitacion == null || invitacion.Estado == "Cancelada" || invitacion.Estado == "Expirada")
+                return null;
+
+            var agregados = new List<InvitacionVisitante>();
+            foreach (var v in nuevosVisitantes)
+            {
+                if (string.IsNullOrWhiteSpace(v.Email)) continue;
+                if (invitacion.Visitantes.Any(iv => iv.EmailVisitante?.ToLower() == v.Email.ToLower())) continue;
+
+                var iv = new InvitacionVisitante
+                {
+                    InvitacionId = invitacionId,
+                    EmailVisitante = v.Email,
+                    TelefonoVisitante = v.Telefono
+                };
+                invitacion.Visitantes.Add(iv);
+                agregados.Add(iv);
+            }
+
+            if (agregados.Count > 0)
+                await _context.SaveChangesAsync();
+
+            return agregados;
+        }
+
         public async Task<InvitacionVisitante?> CancelarVisitante(Guid invitacionId, Guid visitanteId, Guid usuarioId)
         {
             var iv = await _context.Set<InvitacionVisitante>()
@@ -136,6 +167,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
     }
 
     public class VisitanteInvitacionRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string? Telefono { get; set; }
+    }
+
+    public class AgregarVisitanteRequest
     {
         public string Email { get; set; } = string.Empty;
         public string? Telefono { get; set; }

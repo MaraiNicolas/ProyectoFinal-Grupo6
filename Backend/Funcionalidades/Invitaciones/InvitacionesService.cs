@@ -121,7 +121,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                     EmailVisitante = v.Email,
                     TelefonoVisitante = v.Telefono
                 };
-                invitacion.Visitantes.Add(iv);
+                _context.Set<InvitacionVisitante>().Add(iv);
                 agregados.Add(iv);
             }
 

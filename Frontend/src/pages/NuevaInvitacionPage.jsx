@@ -214,6 +214,7 @@ export function NuevaInvitacionPage() {
                 <>
                   <label className="field">
                     <span>Fecha</span>
+                    <WeekDayPicker selectedDate={form.fecha} onSelect={(date) => handleFormChange('fecha', date)} />
                     <input type="date" value={form.fecha} onChange={(e) => handleFormChange('fecha', e.target.value)} autoFocus />
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
@@ -385,5 +386,42 @@ export function NuevaInvitacionPage() {
         </section>
       )}
     </section>
+  )
+}
+
+const DAY_LABELS = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom']
+
+function WeekDayPicker({ selectedDate, onSelect }) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayDay = today.getDay()
+  const mondayOffset = todayDay === 0 ? -6 : 1 - todayDay
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + mondayOffset)
+
+  const days = DAY_LABELS.map((label, i) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    const dateStr = date.toISOString().split('T')[0]
+    const isPast = date < today
+    const isToday = date.getTime() === today.getTime()
+    const isSelected = selectedDate === dateStr
+    return { label, dateStr, isPast, isToday, isSelected }
+  })
+
+  return (
+    <div className="weekday-picker">
+      {days.map((d) => (
+        <button
+          key={d.dateStr}
+          type="button"
+          className={`weekday-btn${d.isToday ? ' today' : ''}${d.isSelected ? ' selected' : ''}${d.isPast ? ' past' : ''}`}
+          disabled={d.isPast}
+          onClick={() => onSelect(d.dateStr)}
+        >
+          {d.label}
+        </button>
+      ))}
+    </div>
   )
 }

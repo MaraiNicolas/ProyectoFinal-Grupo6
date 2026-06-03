@@ -51,7 +51,7 @@ export function InvitacionesPage() {
           <table className="visitors-table">
             <thead>
               <tr>
-                <th>Estado</th>
+                <th>Estado de formularios</th>
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Titulo</th>
@@ -67,7 +67,7 @@ export function InvitacionesPage() {
                   style={{ cursor: 'pointer' }}
                   onClick={() => navigate(`/invitaciones/${inv.guid}`)}
                 >
-                  <td><span className={`status-badge status-${inv.estado.toLowerCase()}`}>{inv.estado}</span></td>
+                  <td>{estadoFormularios(inv)}</td>
                   <td>{formatDate(inv.fecha)}</td>
                   <td>{formatTime(inv.horaInicio)} - {formatTime(inv.horaFin)}</td>
                   <td>{inv.titulo || '-'}</td>
@@ -82,6 +82,20 @@ export function InvitacionesPage() {
       </section>
     </section>
   )
+}
+
+function estadoFormularios(inv) {
+  if (inv.estado === 'Cancelada') {
+    return <span className="status-badge status-cancelada">Cancelada</span>
+  }
+  if (inv.estado === 'Expirada') {
+    return <span className="status-badge status-expirada">Evento expirado</span>
+  }
+  const pendientes = (inv.cantidadVisitantes || 0) - (inv.visitantesCompletados || 0)
+  if (pendientes === 0) {
+    return <span className="status-badge status-activa">Completados</span>
+  }
+  return <span className="status-badge status-pendiente">{pendientes} pendientes</span>
 }
 
 function formatDate(dateStr) {

@@ -48,7 +48,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         [HttpGet]
         public async Task<IActionResult> Listar([FromQuery] DateTime? fecha)
         {
-            var invitaciones = await _service.ObtenerInvitaciones(fecha);
+            var usuarioId = ObtenerUsuarioId();
+            var invitaciones = await _service.ObtenerInvitaciones(fecha, usuarioId);
 
             return Ok(invitaciones.Select(i => new
             {

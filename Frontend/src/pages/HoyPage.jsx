@@ -24,7 +24,7 @@ export function HoyPage() {
     <section className="dashboard-content">
       <div className="dashboard-copy">
         <h1>Hoy</h1>
-        <p>Resumen de invitaciones para hoy</p>
+        <p>Todas las invitaciones para el dia de hoy</p>
       </div>
 
       <div className="cards-grid summary-cards">
@@ -55,7 +55,7 @@ export function HoyPage() {
           <table className="visitors-table">
             <thead>
               <tr>
-                <th>Estado</th>
+                <th>Estado de formularios</th>
                 <th>Titulo</th>
                 <th>Motivo</th>
                 <th>Horario</th>
@@ -71,7 +71,7 @@ export function HoyPage() {
                   style={{ cursor: 'pointer' }}
                   onClick={() => navigate(`/invitaciones/${inv.guid}`)}
                 >
-                  <td><span className={`status-badge status-${inv.estado.toLowerCase()}`}>{inv.estado}</span></td>
+                  <td>{estadoFormularios(inv)}</td>
                   <td>{inv.titulo || '-'}</td>
                   <td>{inv.motivo || '-'}</td>
                   <td>{formatTime(inv.horaInicio)} - {formatTime(inv.horaFin)}</td>
@@ -86,6 +86,20 @@ export function HoyPage() {
       </section>
     </section>
   )
+}
+
+function estadoFormularios(inv) {
+  if (inv.estado === 'Cancelada') {
+    return <span className="status-badge status-cancelada">Cancelada</span>
+  }
+  if (inv.estado === 'Expirada') {
+    return <span className="status-badge status-expirada">Evento expirado</span>
+  }
+  const pendientes = (inv.cantidadVisitantes || 0) - (inv.visitantesCompletados || 0)
+  if (pendientes === 0) {
+    return <span className="status-badge status-activa">Completados</span>
+  }
+  return <span className="status-badge status-pendiente">{pendientes} pendientes</span>
 }
 
 function formatTime(timeSpan) {

@@ -3,13 +3,13 @@ import { NavLink } from 'react-router-dom'
 
 const navItems = [
   { to: '/', label: 'Hoy', icon: 'H' },
-  { to: '/invitaciones', label: 'Invitaciones', icon: 'I' },
+  { to: '/invitaciones', label: 'Mis Invitaciones', icon: 'I' },
   { to: '/visitantes', label: 'Visitantes', icon: 'V' },
   { to: '/admin', label: 'Admin', icon: 'A' },
 ]
 
 export function Sidenav() {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
 
   return (
     <aside className={`sidenav ${isExpanded ? 'expanded' : 'collapsed'}`}>

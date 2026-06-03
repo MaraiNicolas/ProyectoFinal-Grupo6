@@ -116,6 +116,10 @@ export function eliminarDestino(id) {
 }
 
 // --- Admin ---
+export function obtenerTodasInvitaciones() {
+  return request('/admin/invitaciones')
+}
+
 export function obtenerUsuarios() {
   return request('/admin/usuarios')
 }

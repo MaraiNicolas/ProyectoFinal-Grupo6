@@ -2,6 +2,7 @@ using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
+using ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones;
 
 namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
 {
@@ -12,11 +13,35 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
     {
         private readonly AdminService _service;
         private readonly IHikCentralService _hikCentral;
+        private readonly InvitacionesService _invitacionesService;
 
-        public AdminController(AdminService service, IHikCentralService hikCentral)
+        public AdminController(AdminService service, IHikCentralService hikCentral, InvitacionesService invitacionesService)
         {
             _service = service;
             _hikCentral = hikCentral;
+            _invitacionesService = invitacionesService;
+        }
+
+        // --- Invitaciones (todas) ---
+
+        [HttpGet("invitaciones")]
+        public async Task<IActionResult> ListarInvitaciones()
+        {
+            var invitaciones = await _invitacionesService.ObtenerInvitaciones(null);
+            return Ok(invitaciones.Select(i => new
+            {
+                i.Guid,
+                i.Titulo,
+                i.Motivo,
+                i.Fecha,
+                i.HoraInicio,
+                i.HoraFin,
+                i.Estado,
+                usuario = i.Usuario != null ? new { i.Usuario.Nombre, i.Usuario.Apellido } : null,
+                destino = i.Destino != null ? new { i.Destino.Nombre } : null,
+                cantidadVisitantes = i.Visitantes.Count,
+                visitantesCompletados = i.Visitantes.Count(v => v.EstadoFormulario == "Completado")
+            }));
         }
 
         // --- Usuarios ---

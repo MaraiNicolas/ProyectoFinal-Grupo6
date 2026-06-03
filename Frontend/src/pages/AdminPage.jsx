@@ -3,11 +3,25 @@ import {
   obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario,
   obtenerDestinos, crearDestino, actualizarDestino, eliminarDestino,
   obtenerConfiguracion, actualizarConfiguracion,
-  obtenerAuditLogs, obtenerInvitaciones, getUsuarioActual,
+  obtenerAuditLogs, obtenerTodasInvitaciones, getUsuarioActual,
 } from '../services/api'
 import { Button } from '../components/Button'
 
 const TABS = ['Invitaciones', 'Usuarios', 'Destinos', 'Configuracion', 'Audit Logs']
+
+function estadoFormularios(inv) {
+  if (inv.estado === 'Cancelada') {
+    return <span className="status-badge status-cancelada">Cancelada</span>
+  }
+  if (inv.estado === 'Expirada') {
+    return <span className="status-badge status-expirada">Evento expirado</span>
+  }
+  const pendientes = (inv.cantidadVisitantes || 0) - (inv.visitantesCompletados || 0)
+  if (pendientes === 0) {
+    return <span className="status-badge status-activa">Completados</span>
+  }
+  return <span className="status-badge status-pendiente">{pendientes} pendientes</span>
+}
 
 function FilterChips({ filters, onRemove }) {
   const entries = Object.entries(filters).filter(([, v]) => v !== '' && v !== null)
@@ -104,7 +118,7 @@ function AdminInvitaciones() {
   const { sortField, sortDir, onSort, sortFn } = useSort('fecha')
 
   useEffect(() => {
-    obtenerInvitaciones().then((data) => { setInvitaciones(data || []); setLoading(false) })
+    obtenerTodasInvitaciones().then((data) => { setInvitaciones(data || []); setLoading(false) })
   }, [])
 
   const filtered = useMemo(() => {
@@ -203,7 +217,7 @@ function AdminInvitaciones() {
         <table className="visitors-table">
           <thead>
             <tr>
-              <SortHeader label="Estado" field="estado" sortField={sortField} sortDir={sortDir} onSort={onSort} />
+              <SortHeader label="Estado de formularios" field="estado" sortField={sortField} sortDir={sortDir} onSort={onSort} />
               <SortHeader label="Fecha" field="fecha" sortField={sortField} sortDir={sortDir} onSort={onSort} />
               <SortHeader label="Titulo" field="titulo" sortField={sortField} sortDir={sortDir} onSort={onSort} />
               <SortHeader label="Motivo" field="motivo" sortField={sortField} sortDir={sortDir} onSort={onSort} />
@@ -215,7 +229,7 @@ function AdminInvitaciones() {
           <tbody>
             {filtered.map((inv) => (
               <tr key={inv.guid}>
-                <td><span className={`status-badge status-${inv.estado.toLowerCase()}`}>{inv.estado}</span></td>
+                <td>{estadoFormularios(inv)}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>{new Date(inv.fecha).toLocaleDateString('es-AR')}</td>
                 <td>{inv.titulo || '-'}</td>
                 <td>{inv.motivo || '-'}</td>

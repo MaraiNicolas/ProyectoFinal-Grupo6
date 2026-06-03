@@ -54,13 +54,16 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return invitacion;
         }
 
-        public async Task<List<Invitacion>> ObtenerInvitaciones(DateTime? fecha)
+        public async Task<List<Invitacion>> ObtenerInvitaciones(DateTime? fecha, Guid? usuarioId = null)
         {
             var query = _context.Set<Invitacion>()
                 .Include(i => i.Usuario)
                 .Include(i => i.Destino)
                 .Include(i => i.Visitantes)
                 .AsQueryable();
+
+            if (usuarioId.HasValue)
+                query = query.Where(i => i.UsuarioId == usuarioId.Value);
 
             if (fecha.HasValue)
                 query = query.Where(i => i.Fecha.Date == fecha.Value.Date);

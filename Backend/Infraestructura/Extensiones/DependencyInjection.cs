@@ -50,6 +50,17 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
                         ServerCertificateCustomValidationCallback = (_, _, _, _) => true
                     });
             }
+            // Email: mock o real segun configuracion
+            var useMockEmail = config.GetValue<bool>("Email:UseMock", true);
+            if (useMockEmail)
+            {
+                services.AddScoped<IEmailService, MockEmailService>();
+            }
+            else
+            {
+                services.AddScoped<IEmailService, SmtpEmailService>();
+            }
+
             // DynamoDB Client
             var dynamoDbServiceUrl = config.GetValue<string>("DynamoDB:ServiceUrl", "http://localhost:8000");
             services.AddSingleton<IAmazonDynamoDB>(sp =>

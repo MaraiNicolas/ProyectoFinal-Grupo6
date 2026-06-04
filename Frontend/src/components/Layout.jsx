@@ -9,7 +9,7 @@ export function Layout({ auth }) {
 
   return (
     <main className="app-shell">
-      <Navbar userName={auth.userName} onLogout={auth.handleLogout} />
+      <Navbar userEmail={auth.userEmail} onSwitchUser={auth.handleLogout} />
       <Sidenav />
       <div className="main-panel">
         <Outlet />

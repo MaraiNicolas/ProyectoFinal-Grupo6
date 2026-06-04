@@ -10,11 +10,15 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
     {
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogService _auditLog;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
-        public InvitacionesService(ApplicationDbContext context, IAuditLogService auditLog)
+        public InvitacionesService(ApplicationDbContext context, IAuditLogService auditLog, IEmailService emailService, IConfiguration configuration)
         {
             _context = context;
             _auditLog = auditLog;
+            _emailService = emailService;
+            _configuration = configuration;
         }
 
         public async Task<Invitacion> CrearInvitacion(CrearInvitacionRequest request, Guid usuarioId)
@@ -50,6 +54,25 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             var usuario = await _context.Set<Usuario>().FindAsync(usuarioId);
             await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId, invitacionId: invitacion.Guid,
                 usuarioEmail: usuario?.Email, invitacionTitulo: invitacion.Titulo);
+
+            var destino = await _context.Set<Destino>().FindAsync(invitacion.DestinoId);
+            var nombreAnfitrion = usuario != null ? $"{usuario.Nombre} {usuario.Apellido}" : "Anfitrion";
+            var baseUrl = _configuration["App:BaseUrl"]!;
+
+            foreach (var iv in invitacion.Visitantes)
+            {
+                await _emailService.EnviarLinkRegistro(new EmailRegistroRequest
+                {
+                    DestinatarioEmail = iv.EmailVisitante,
+                    LinkRegistro = $"{baseUrl}/registro/{iv.Token}",
+                    TituloInvitacion = invitacion.Titulo,
+                    NombreAnfitrion = nombreAnfitrion,
+                    Fecha = invitacion.Fecha,
+                    HoraInicio = invitacion.HoraInicio,
+                    HoraFin = invitacion.HoraFin,
+                    Destino = destino?.Nombre
+                });
+            }
 
             return invitacion;
         }
@@ -121,12 +144,34 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                     EmailVisitante = v.Email,
                     TelefonoVisitante = v.Telefono
                 };
-                invitacion.Visitantes.Add(iv);
+                _context.Set<InvitacionVisitante>().Add(iv);
                 agregados.Add(iv);
             }
 
             if (agregados.Count > 0)
+            {
                 await _context.SaveChangesAsync();
+
+                var usuario = await _context.Set<Usuario>().FindAsync(usuarioId);
+                var destino = await _context.Set<Destino>().FindAsync(invitacion.DestinoId);
+                var nombreAnfitrion = usuario != null ? $"{usuario.Nombre} {usuario.Apellido}" : "Anfitrion";
+                var baseUrl = _configuration["App:BaseUrl"]!;
+
+                foreach (var iv in agregados)
+                {
+                    await _emailService.EnviarLinkRegistro(new EmailRegistroRequest
+                    {
+                        DestinatarioEmail = iv.EmailVisitante,
+                        LinkRegistro = $"{baseUrl}/registro/{iv.Token}",
+                        TituloInvitacion = invitacion.Titulo,
+                        NombreAnfitrion = nombreAnfitrion,
+                        Fecha = invitacion.Fecha,
+                        HoraInicio = invitacion.HoraInicio,
+                        HoraFin = invitacion.HoraFin,
+                        Destino = destino?.Nombre
+                    });
+                }
+            }
 
             return agregados;
         }

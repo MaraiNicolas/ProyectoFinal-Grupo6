@@ -43,6 +43,63 @@
   gap: 18px;
 }
 
+/* User select list (login) */
+.user-select-list {
+  display: grid;
+  gap: 10px;
+}
+
+.user-select-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 31, 56, 0.1);
+  border-radius: 14px;
+  background: rgba(20, 31, 56, 0.02);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.user-select-item:hover {
+  border-color: var(--accent);
+  background: rgba(11, 93, 215, 0.04);
+  box-shadow: 0 4px 12px rgba(11, 93, 215, 0.1);
+}
+
+.user-select-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.user-select-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-select-name {
+  font-weight: 600;
+  color: var(--text-h);
+  font-size: 0.95rem;
+}
+
+.user-select-email {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 .field {
   display: grid;
   gap: 8px;
@@ -257,6 +314,22 @@
   background: rgba(11, 93, 215, 0.1);
   color: var(--accent);
   font-weight: 700;
+}
+
+.navbar-user-btn {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(11, 93, 215, 0.1);
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.navbar-user-btn:hover {
+  background: rgba(11, 93, 215, 0.18);
 }
 
 .dashboard-content {
@@ -519,6 +592,95 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* Re-invite dropdown menu */
+.reinvite-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  z-index: 50;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(20, 31, 56, 0.12);
+  box-shadow: 0 8px 24px rgba(18, 38, 63, 0.16);
+}
+
+.reinvite-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.reinvite-menu-item:hover {
+  background: rgba(11, 93, 215, 0.08);
+}
+
+/* Invitation picker modal */
+.picker-modal {
+  width: min(540px, calc(100% - 32px));
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.picker-list {
+  display: grid;
+  gap: 8px;
+}
+
+.picker-item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 31, 56, 0.1);
+  border-radius: 12px;
+  background: rgba(20, 31, 56, 0.02);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.picker-item:hover {
+  border-color: var(--accent);
+  background: rgba(11, 93, 215, 0.04);
+}
+
+.picker-item-title {
+  font-weight: 600;
+  color: var(--text-h);
+  margin-bottom: 4px;
+}
+
+.picker-item-details {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* Success toast */
+.success-toast {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(31, 122, 61, 0.1);
+  border: 1px solid rgba(31, 122, 61, 0.2);
+  color: #1f7a3d;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
 }
 
 .app-snackbar {
@@ -1041,6 +1203,93 @@
 
 .wizard-body {
   margin: 20px 0;
+}
+
+/* Week day quick-pick */
+.weekday-picker-wrapper {
+  margin-bottom: 10px;
+}
+
+.weekday-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.weekday-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 140px;
+  text-align: center;
+}
+
+.weekday-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(20, 31, 56, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 1.1rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.weekday-arrow:hover:not(:disabled) {
+  background: rgba(11, 93, 215, 0.08);
+  border-color: rgba(11, 93, 215, 0.25);
+}
+
+.weekday-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.weekday-picker {
+  display: flex;
+  gap: 6px;
+}
+
+.weekday-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid rgba(20, 31, 56, 0.12);
+  border-radius: 10px;
+  background: rgba(20, 31, 56, 0.03);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.weekday-btn:hover:not(:disabled) {
+  background: rgba(11, 93, 215, 0.08);
+  border-color: rgba(11, 93, 215, 0.25);
+}
+
+.weekday-btn.today {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(11, 93, 215, 0.06);
+}
+
+.weekday-btn.selected {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.weekday-btn.past {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .wizard-actions {

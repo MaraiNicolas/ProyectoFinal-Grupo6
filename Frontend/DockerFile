@@ -1,6 +1,12 @@
 # Etapa 1: Compilar la app de React con Node
 FROM node:20-alpine AS build
 WORKDIR /app
+
+# URL del backend que Vite inlinea en el bundle durante el build.
+# Se sobrescribe desde docker-compose.yml via build args.
+ARG VITE_API_URL=http://localhost:8080/api
+ENV VITE_API_URL=$VITE_API_URL
+
 COPY package*.json ./
 RUN npm install
 COPY . .

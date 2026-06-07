@@ -10,6 +10,7 @@ import { DetalleInvitacionPage } from './pages/DetalleInvitacionPage'
 import { VisitantesPage } from './pages/VisitantesPage'
 import { AdminPage } from './pages/AdminPage'
 import { RegistroPage } from './pages/RegistroPage'
+import { SsoCallbackPage } from './pages/SsoCallbackPage'
 
 function App() {
   const auth = useAuth()
@@ -22,6 +23,7 @@ function App() {
           auth.isLoggedIn ? <Navigate to="/" replace /> : <LoginPage auth={auth} />
         } />
         <Route path="/registro/:token" element={<RegistroPage />} />
+        <Route path="/auth/sso" element={<SsoCallbackPage />} />
 
         {/* Authenticated routes — with Navbar + Sidenav */}
         <Route element={<Layout auth={auth} />}>

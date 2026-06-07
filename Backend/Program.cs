@@ -37,9 +37,16 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 // Autenticacion JWT
-var jwtKey = builder.Configuration["Jwt:Key"]!;
-var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
-var jwtAudience = builder.Configuration["Jwt:Audience"]!;
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Falta configuracion 'Jwt:Key'. Definirla en appsettings.Development.json o como variable de entorno Jwt__Key (minimo 32 caracteres).");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+    ?? throw new InvalidOperationException("Falta configuracion 'Jwt:Issuer'.");
+var jwtAudience = builder.Configuration["Jwt:Audience"]
+    ?? throw new InvalidOperationException("Falta configuracion 'Jwt:Audience'.");
+
+if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
+    throw new InvalidOperationException("'Jwt:Key' debe tener al menos 32 caracteres (256 bits) para HS256.");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -66,19 +73,32 @@ using (var scope = app.Services.CreateScope())
     SeedData.Inicializar(context);
 }
 
-// Intentar crear la tabla AuditLogs en DynamoDB Local si está disponible
-try
+// Intentar crear la tabla AuditLogs en DynamoDB solo si NO estamos usando el mock.
+// Si DynamoDB Local no esta disponible, no debe bloquear el arranque (timeout corto).
+var useMockAudit = app.Configuration.GetValue<bool>("AuditLog:UseMock", true);
+if (!useMockAudit)
 {
-    var dynamoConfig = new AmazonDynamoDBConfig { ServiceURL = "http://localhost:8000" };
-    using var dynamoClient = new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
-    await DynamoDbInitializer.EnsureAuditLogsTableAsync(dynamoClient);
-    Console.WriteLine("Tabla AuditLogs verificada/creada en DynamoDB Local.");
+    try
+    {
+        var dynamoClient = app.Services.GetRequiredService<IAmazonDynamoDB>();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await DynamoDbInitializer.EnsureAuditLogsTableAsync(dynamoClient, cts.Token);
+        Console.WriteLine("Tabla AuditLogs verificada/creada en DynamoDB.");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("Timeout al conectar con DynamoDB. Verifica que DynamoDB Local este corriendo en el ServiceUrl configurado.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error al inicializar DynamoDB: {ex.Message}");
+    }
 }
-catch (Exception ex)
+else
 {
-    Console.WriteLine($"Error al inicializar DynamoDB Local: {ex.Message}");
-    Console.WriteLine(ex.StackTrace);
+    Console.WriteLine("AuditLog:UseMock=true, se omite la inicializacion de DynamoDB.");
 }
+
 app.UseExceptionHandler();
 
 app.UseCors("AllowReact");

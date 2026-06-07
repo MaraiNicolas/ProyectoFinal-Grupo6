@@ -62,10 +62,17 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
             }
 
             // DynamoDB Client
+            // DynamoDB Client
             var dynamoDbServiceUrl = config.GetValue<string>("DynamoDB:ServiceUrl", "http://localhost:8000");
             services.AddSingleton<IAmazonDynamoDB>(sp =>
             {
-                var dynamoConfig = new AmazonDynamoDBConfig { ServiceURL = dynamoDbServiceUrl };
+                var dynamoConfig = new AmazonDynamoDBConfig
+                {
+                    ServiceURL = dynamoDbServiceUrl,
+                    // Falla rapido si DynamoDB Local no esta disponible (evita bloquear el arranque).
+                    Timeout = TimeSpan.FromSeconds(3),
+                    MaxErrorRetry = 0
+                };
                 return new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
             });
 
@@ -80,7 +87,19 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
                 services.AddScoped<IAuditLogService, DynamoDbAuditLogService>();
             }
 
-           // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
+            // Finnegans SSO: cliente HTTP que apunta a la API del cliente.
+            // BaseUrl configurable via appsettings.json (seccion Finnegans) o variable
+            // de entorno Finnegans__BaseUrl (ej: http://servicios.finneg.com).
+            services.AddHttpClient<IFinnegansAuthService, FinnegansAuthService>((sp, client) =>
+            {
+                var cfg = sp.GetRequiredService<IConfiguration>();
+                var baseUrl = cfg["Finnegans:BaseUrl"];
+                if (!string.IsNullOrWhiteSpace(baseUrl))
+                    client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromSeconds(15);
+            });
+
+            // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddExceptionHandler<GlobalExceptionHandler>();
             services.AddProblemDetails();

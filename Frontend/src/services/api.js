@@ -1,170 +1,185 @@
-const API_URL = 'https://localhost:7289/api'
+const API_URL = import.meta.env.VITE_API_URL || "https://localhost:7289/api";
 
 function getToken() {
-  return localStorage.getItem('token')
+  return localStorage.getItem("token");
 }
 
 async function request(path, options = {}) {
-  const headers = { 'Content-Type': 'application/json' }
-  const token = getToken()
-  if (token) headers['Authorization'] = `Bearer ${token}`
+  const headers = { "Content-Type": "application/json" };
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers })
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
 
   if (response.status === 401) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('usuario')
-    window.location.href = '/login'
-    return
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    window.location.href = "/login";
+    return;
   }
 
-  if (response.status === 204) return null
-  return response.json()
+  if (response.status === 204) return null;
+  return response.json();
 }
 
 // --- Auth ---
 export async function login(email, password) {
-  const data = await request('/auth/login', {
-    method: 'POST',
+  const data = await request("/auth/login", {
+    method: "POST",
     body: JSON.stringify({ email, password }),
-  })
+  });
   if (data?.token) {
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('usuario', JSON.stringify(data.usuario))
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("usuario", JSON.stringify(data.usuario));
   }
-  return data
+  return data;
+}
+
+// SSO con Finnegans: valida el access_token recibido en la URL contra el backend.
+export async function ssoLogin(accessToken) {
+  const data = await request(
+    `/auth/sso?access_token=${encodeURIComponent(accessToken)}`,
+  );
+  if (data?.token) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("usuario", JSON.stringify(data.usuario));
+  }
+  return data;
 }
 
 export function logout() {
-  localStorage.removeItem('token')
-  localStorage.removeItem('usuario')
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
 }
 
 export function getUsuarioActual() {
-  const raw = localStorage.getItem('usuario')
-  return raw ? JSON.parse(raw) : null
+  const raw = localStorage.getItem("usuario");
+  return raw ? JSON.parse(raw) : null;
 }
 
 export function estaAutenticado() {
-  return !!getToken()
+  return !!getToken();
 }
 
 // --- Invitaciones ---
 export function obtenerInvitaciones(fecha) {
-  const params = fecha ? `?fecha=${fecha}` : ''
-  return request(`/invitaciones${params}`)
+  const params = fecha ? `?fecha=${fecha}` : "";
+  return request(`/invitaciones${params}`);
 }
 
 export function obtenerInvitacion(id) {
-  return request(`/invitaciones/${id}`)
+  return request(`/invitaciones/${id}`);
 }
 
 export function crearInvitacion(data) {
-  return request('/invitaciones', {
-    method: 'POST',
+  return request("/invitaciones", {
+    method: "POST",
     body: JSON.stringify(data),
-  })
+  });
 }
 
 export function cancelarInvitacion(id) {
-  return request(`/invitaciones/${id}/cancelar`, { method: 'PUT' })
+  return request(`/invitaciones/${id}/cancelar`, { method: "PUT" });
 }
 
 export function cancelarVisitante(invitacionId, visitanteId) {
-  return request(`/invitaciones/${invitacionId}/visitantes/${visitanteId}/cancelar`, { method: 'PUT' })
+  return request(
+    `/invitaciones/${invitacionId}/visitantes/${visitanteId}/cancelar`,
+    { method: "PUT" },
+  );
 }
 
 export function agregarVisitantes(invitacionId, visitantes) {
   return request(`/invitaciones/${invitacionId}/visitantes`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(visitantes),
-  })
+  });
 }
 
 // --- Registro (public) ---
 export function obtenerRegistro(token) {
-  return request(`/registro/${token}`)
+  return request(`/registro/${token}`);
 }
 
 export function completarRegistro(token, data) {
   return request(`/registro/${token}`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(data),
-  })
+  });
 }
 
 // --- Visitantes ---
 export function obtenerVisitantes(search) {
-  const params = search ? `?search=${encodeURIComponent(search)}` : ''
-  return request(`/visitantes${params}`)
+  const params = search ? `?search=${encodeURIComponent(search)}` : "";
+  return request(`/visitantes${params}`);
 }
 
 // --- Destinos ---
 export function obtenerDestinos() {
-  return request('/destinos')
+  return request("/destinos");
 }
 
 export function crearDestino(data) {
-  return request('/destinos', {
-    method: 'POST',
+  return request("/destinos", {
+    method: "POST",
     body: JSON.stringify(data),
-  })
+  });
 }
 
 export function actualizarDestino(id, data) {
   return request(`/destinos/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(data),
-  })
+  });
 }
 
 export function eliminarDestino(id) {
-  return request(`/destinos/${id}`, { method: 'DELETE' })
+  return request(`/destinos/${id}`, { method: "DELETE" });
 }
 
 // --- Admin ---
 export function obtenerTodasInvitaciones() {
-  return request('/admin/invitaciones')
+  return request("/admin/invitaciones");
 }
 
 export function obtenerUsuarios() {
-  return request('/admin/usuarios')
+  return request("/admin/usuarios");
 }
 
 export function crearUsuario(data) {
-  return request('/admin/usuarios', {
-    method: 'POST',
+  return request("/admin/usuarios", {
+    method: "POST",
     body: JSON.stringify(data),
-  })
+  });
 }
 
 export function actualizarUsuario(id, data) {
   return request(`/admin/usuarios/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(data),
-  })
+  });
 }
 
 export function eliminarUsuario(id) {
-  return request(`/admin/usuarios/${id}`, { method: 'DELETE' })
+  return request(`/admin/usuarios/${id}`, { method: "DELETE" });
 }
 
 export function obtenerConfiguracion() {
-  return request('/admin/configuracion')
+  return request("/admin/configuracion");
 }
 
 export function actualizarConfiguracion(clave, valor) {
   return request(`/admin/configuracion/${clave}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify({ valor }),
-  })
+  });
 }
 
 export function obtenerAuditLogs(eventType, desde, hasta) {
-  const params = new URLSearchParams()
-  if (eventType) params.set('eventType', eventType)
-  if (desde) params.set('desde', desde)
-  if (hasta) params.set('hasta', hasta)
-  const query = params.toString()
-  return request(`/admin/audit-logs${query ? `?${query}` : ''}`)
+  const params = new URLSearchParams();
+  if (eventType) params.set("eventType", eventType);
+  if (desde) params.set("desde", desde);
+  if (hasta) params.set("hasta", hasta);
+  const query = params.toString();
+  return request(`/admin/audit-logs${query ? `?${query}` : ""}`);
 }

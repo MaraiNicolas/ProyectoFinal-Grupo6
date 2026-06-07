@@ -9,13 +9,41 @@ services:
       dockerfile: Backend/Dockerfile
     ports:
       - "8080:8080" # Port default: http://localhost:8080
+    environment:
+      # --- ASP.NET Core ---
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+      # --- SSO Finnegans ---
+      # Cambiar Finnegans__Enabled a "true" para habilitar el SSO.
+      # Ver docs/SSO-Finnegans-Deployment.md para detalles.
+      Finnegans__Enabled: "${FINNEGANS_ENABLED:-false}"
+      Finnegans__BaseUrl: "${BASE_GO_URL}"
+      Finnegans__InvitadosEndpoint: "${FINNEGANS_INVITADOS_ENDPOINT:-/api/1/invitados}"
+      Finnegans__AutoCreateUsuarios: "${FINNEGANS_AUTO_CREATE:-false}"
+      Finnegans__RolPorDefecto: "${FINNEGANS_ROL_DEFAULT:-Empleado}"
+
+      # --- JWT (JWT_KEY obligatorio: si falta, docker compose up falla con mensaje claro) ---
+      Jwt__Key: "${JWT_KEY:?JWT_KEY es obligatorio - definir en .env (minimo 32 chars)}"
+      Jwt__Issuer: "${JWT_ISSUER:-ProyectoFinalGrupo6}"
+      Jwt__Audience: "${JWT_AUDIENCE:-ProyectoFinalGrupo6Clients}"
+
+      # --- Servicios externos (mock por defecto en contenedor) ---
+      HikCentral__UseMock: "${HIKCENTRAL_USE_MOCK:-true}"
+      AuditLog__UseMock: "${AUDIT_USE_MOCK:-true}"
+      Email__UseMock: "${EMAIL_USE_MOCK:-true}"
+
   #Bloque de React-Frontend
   frontend:
     image: react-frontend
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        # Vite inlinea las VITE_* en build-time, por eso van como build arg.
+        # En produccion debe apuntar al dominio publico del backend.
+        VITE_API_URL: "${VITE_API_URL:-http://localhost:8080/api}"
     ports:
       - "3000:80"  # Port default: http://localhost:3000
     depends_on:
-      - proyectofinal-grupo6.api  
+      - proyectofinal-grupo6.api

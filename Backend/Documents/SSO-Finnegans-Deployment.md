@@ -83,7 +83,11 @@ FINNEGANS_ENABLED=true
 BASE_GO_URL=https://servicios.cliente.com
 FINNEGANS_INVITADOS_ENDPOINT=/api/1/invitados
 FINNEGANS_AUTO_CREATE=false
-FINNEGANS_ROL_DEFAULT=Empleado
+# Rol asignado a usuarios autocreados que NO son admin en Finnegans.
+# El sistema hoy no usa el rol para autorizar endpoints (todos los usuarios
+# autenticados pueden acceder a todo), pero el campo queda preconfigurado
+# para habilitar autorizacion por rol en el futuro sin tocar el deploy.
+FINNEGANS_ROL_DEFAULT=Admin
 
 # --- JWT (CRITICO: generar clave nueva, minimo 32 chars) ---
 JWT_KEY=<clave-secreta-generada-con-openssl-rand-base64-48>
@@ -173,7 +177,9 @@ Finnegans__Enabled=true
 Finnegans__BaseUrl=https://servicios.cliente.com
 Finnegans__InvitadosEndpoint=/api/1/invitados
 Finnegans__AutoCreateUsuarios=false
-Finnegans__RolPorDefecto=Empleado
+# Rol por defecto para usuarios autocreados que NO son admin en Finnegans.
+# Hoy no se usa para autorizar endpoints (queda preconfigurado para a futuro).
+Finnegans__RolPorDefecto=Admin
 
 Jwt__Key=<clave-secreta-de-al-menos-32-caracteres>
 Jwt__Issuer=ProyectoFinalGrupo6

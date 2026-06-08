@@ -21,7 +21,7 @@ services:
       Finnegans__BaseUrl: "${BASE_GO_URL}"
       Finnegans__InvitadosEndpoint: "${FINNEGANS_INVITADOS_ENDPOINT:-/api/1/invitados}"
       Finnegans__AutoCreateUsuarios: "${FINNEGANS_AUTO_CREATE:-false}"
-      Finnegans__RolPorDefecto: "${FINNEGANS_ROL_DEFAULT:-Empleado}"
+      Finnegans__RolPorDefecto: "${FINNEGANS_ROL_DEFAULT:-Admin}"
 
       # --- JWT (JWT_KEY obligatorio: si falta, docker compose up falla con mensaje claro) ---
       Jwt__Key: "${JWT_KEY:?JWT_KEY es obligatorio - definir en .env (minimo 32 chars)}"

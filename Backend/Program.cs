@@ -29,7 +29,14 @@ builder.Services.AddSwaggerGen(
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowReact", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        // Origenes permitidos:
+        // - http://localhost:5173
+        // - http://localhost:3000
+        // - http://localhost  
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://localhost")
         .AllowAnyHeader()
         .AllowAnyMethod();
     })
@@ -108,7 +115,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

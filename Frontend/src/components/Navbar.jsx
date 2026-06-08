@@ -1,12 +1,11 @@
-export function Navbar({ userName, onLogout }) {
+export function Navbar({ userEmail, onSwitchUser }) {
   return (
     <header className="navbar">
       <span className="navbar-brand">Sistema de gestion</span>
 
       <div className="navbar-actions">
-        <span className="navbar-user">{userName}</span>
-        <button type="button" className="logout-button" onClick={onLogout}>
-          Cerrar sesion
+        <button className="navbar-user-btn" onClick={onSwitchUser}>
+          {userEmail}
         </button>
       </div>
     </header>

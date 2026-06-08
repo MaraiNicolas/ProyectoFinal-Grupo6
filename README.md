@@ -49,11 +49,15 @@ npm run dev
 ## Estado funcional actual
 
 - Login local
+- Persistencia de login en localStorage
 - Dashboard de modulos
 - Sidebar contraible
 - Grilla de visitantes con filtros
+- Componente de grilla reutilizable para distintas vistas
 - Alta de visitante con redireccion a grilla
+- Edicion de visitante desde accion Modificar con formulario precargado
 - Snackbar de confirmacion de alta
+- Eliminacion de visitante con confirmacion y mensaje de exito
 - Menu de acciones por visitante (elipsis)
 
 ## Notas

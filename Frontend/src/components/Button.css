@@ -1,0 +1,91 @@
+/* =======================================
+   Button — componente reutilizable
+   Variantes: brand | primary | secondary | danger
+   Tamaños:   sm | md | lg
+   ======================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.btn--full {
+  width: 100%;
+}
+
+/* --- Tamaños --------------------------------------- */
+.btn--sm {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+}
+
+.btn--md {
+  padding: 12px 18px;
+}
+
+.btn--lg {
+  padding: 14px 18px;
+  border-radius: 14px;
+}
+
+/* --- Variantes ------------------------------------- */
+
+/* brand: gradiente azul — login, logout, módulos */
+.btn--brand {
+  background: linear-gradient(135deg, #0b5dd7, #19a0ff);
+  color: #ffffff;
+  border: 0;
+}
+.btn--brand:not(:disabled):hover {
+  box-shadow: 0 16px 30px rgba(11, 93, 215, 0.24);
+}
+
+/* primary: fondo oscuro — acción principal de formulario */
+.btn--primary {
+  background: #0d1b2a;
+  color: #ffffff;
+  border: 0;
+}
+.btn--primary:not(:disabled):hover {
+  box-shadow: 0 12px 24px rgba(13, 27, 42, 0.28);
+}
+
+/* secondary: fondo blanco con borde — cancelar / acción secundaria */
+.btn--secondary {
+  background: rgba(255, 255, 255, 0.84);
+  color: #0d1b2a;
+  border: 1px solid rgba(20, 31, 56, 0.2);
+}
+.btn--secondary:not(:disabled):hover {
+  box-shadow: 0 8px 20px rgba(20, 31, 56, 0.1);
+}
+
+/* danger: rojo — eliminar / acción destructiva */
+.btn--danger {
+  background: #c02828;
+  color: #ffffff;
+  border: 0;
+}
+.btn--danger:not(:disabled):hover {
+  box-shadow: 0 12px 24px rgba(192, 40, 40, 0.28);
+}

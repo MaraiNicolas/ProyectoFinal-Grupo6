@@ -1,0 +1,33 @@
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# .NET
+bin/
+obj/
+*.dll
+*.pdb
+
+# Node
+node_modules/
+dist/
+
+# Environment
+.env
+.env.*
+appsettings.Development.json
+appsettings.*.local.json
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Local docs & AI config (private)
+docs/
+CLAUDE.md
+.claude/
+.playwright-mcp/

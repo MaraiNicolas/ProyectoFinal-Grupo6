@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+  # Bloque de Api
+  proyectofinal-grupo6.api:
+    image: ${DOCKER_REGISTRY-}proyectofinalgrupo6api
+    build:
+      context: .
+      dockerfile: Backend/Dockerfile
+    ports:
+      - "8080:8080" # Port default: http://localhost:8080
+  #Bloque de React-Frontend
+  frontend:
+    image: react-frontend
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"  # Port default: http://localhost:3000
+    depends_on:
+      - proyectofinal-grupo6.api  

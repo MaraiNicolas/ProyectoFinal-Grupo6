@@ -15,4 +15,8 @@ export const modules = [
     title: "Recursos",
     description: "Control y disponibilidad de espacios, equipos y materiales.",
   },
+  {
+    title: "Scheduled Visits",
+    description: "Management and tracking of scheduled visits to the facility.",
+  },
 ];

@@ -38,12 +38,16 @@ La aplicacion queda disponible normalmente en:
 ## Funcionalidades implementadas
 
 - Pantalla de login local
+- Persistencia de sesion de login en localStorage
 - Dashboard con modulos
 - Sidebar contraible
 - Grilla de visitantes con filtros por nombre, apellido, mail y DNI
 - Columna de acciones por visitante con menu de elipsis
+- Grilla reutilizable configurable por columnas y acciones
 - Alta de visitante en vista dedicada
+- Edicion de visitante con formulario precargado
 - Snackbar de confirmacion al crear visitante
+- Eliminacion de visitante con modal de confirmacion y snackbar de exito
 
 ## Estructura principal
 

@@ -1,7 +1,12 @@
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones;
+using Amazon.DynamoDBv2;
+using ProyectoFinal_Grupo6.Api.Infraestructura.Servicios;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +15,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseInMemoryDatabase("Grupo6Db");
 });
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Agregar servicios al contenedor
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -30,11 +34,55 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod();
     })
 );
+builder.Services.AddControllers();
+
+// Autenticacion JWT
+var jwtKey = builder.Configuration["Jwt:Key"]!;
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
+var jwtAudience = builder.Configuration["Jwt:Audience"]!;
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+builder.Services.AddAuthorization();
 builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();
 
+// Datos iniciales para MVP (se reinician al reiniciar la app)
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    SeedData.Inicializar(context);
+}
+
+// Intentar crear la tabla AuditLogs en DynamoDB Local si está disponible
+try
+{
+    var dynamoConfig = new AmazonDynamoDBConfig { ServiceURL = "http://localhost:8000" };
+    using var dynamoClient = new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
+    await DynamoDbInitializer.EnsureAuditLogsTableAsync(dynamoClient);
+    Console.WriteLine("Tabla AuditLogs verificada/creada en DynamoDB Local.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error al inicializar DynamoDB Local: {ex.Message}");
+    Console.WriteLine(ex.StackTrace);
+}
+app.UseExceptionHandler();
+
 app.UseCors("AllowReact");
-// Configure the HTTP request pipeline.
+// Configurar el pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -42,5 +90,9 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();

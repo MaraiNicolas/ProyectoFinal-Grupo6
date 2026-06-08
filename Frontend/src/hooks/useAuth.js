@@ -1,30 +1,39 @@
-import { useState } from "react";
+import { useState } from 'react'
+import * as api from '../services/api'
 
 export function useAuth() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => api.estaAutenticado())
+  const [error, setError] = useState('')
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setIsLoggedIn(true);
-  };
+  const usuario = api.getUsuarioActual()
+  const userName = usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Usuario'
+  const userEmail = usuario?.email || ''
+
+  const loginAs = async (email, password) => {
+    setError('')
+    try {
+      const data = await api.login(email, password)
+      if (data?.token) {
+        setIsLoggedIn(true)
+      } else {
+        setError(data?.mensaje || 'Error al iniciar sesion')
+      }
+    } catch {
+      setError('No se pudo conectar con el servidor')
+    }
+  }
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setPassword("");
-  };
-
-  const userName = email.trim() ? email.split("@")[0] : "Usuario";
+    api.logout()
+    setIsLoggedIn(false)
+  }
 
   return {
-    email,
-    setEmail,
-    password,
-    setPassword,
     isLoggedIn,
     userName,
-    handleSubmit,
+    userEmail,
+    error,
+    loginAs,
     handleLogout,
-  };
+  }
 }

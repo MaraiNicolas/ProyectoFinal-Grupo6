@@ -10,12 +10,14 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
     public class DynamoDbAuditLogService : IAuditLogService
     {
         private readonly IAmazonDynamoDB _dynamoClient;
+        private readonly ILogger<DynamoDbAuditLogService> _logger;
         private const string TableName = "AuditLogs";
         private const string IndexName = "EventType-Timestamp-index";
 
-        public DynamoDbAuditLogService(IAmazonDynamoDB dynamoClient)
+        public DynamoDbAuditLogService(IAmazonDynamoDB dynamoClient, ILogger<DynamoDbAuditLogService> logger)
         {
             _dynamoClient = dynamoClient;
+            _logger = logger;
         }
 
         public async Task RegistrarEvento(string eventType, Guid? usuarioId = null, Guid? visitanteId = null, Guid? invitacionId = null, string? usuarioEmail = null, string? visitanteEmail = null, string? invitacionTitulo = null, string? metadata = null)
@@ -54,7 +56,31 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
                 Item = item
             };
 
-            await _dynamoClient.PutItemAsync(request);
+            // Fail-safe: si DynamoDB esta caido o la tabla no existe, no rompemos el
+            // flujo principal. La auditoria es secundaria; logueamos el problema y
+            // seguimos. Para errores de tabla inexistente, intentamos crearla y
+            // reintentar una vez.
+            try
+            {
+                await _dynamoClient.PutItemAsync(request);
+            }
+            catch (ResourceNotFoundException)
+            {
+                _logger.LogWarning("Tabla {TableName} no existe. Intentando crearla y reintentar el PutItem.", TableName);
+                try
+                {
+                    await DynamoDbInitializer.EnsureAuditLogsTableAsync(_dynamoClient);
+                    await _dynamoClient.PutItemAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "No se pudo crear la tabla {TableName} ni registrar el audit log para {EventType}.", TableName, eventType);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar audit log para {EventType}. El evento no se persistio.", eventType);
+            }
         }
 
         public async Task<List<AuditLog>> ObtenerLogs(string? eventType = null, DateTime? desde = null, DateTime? hasta = null)

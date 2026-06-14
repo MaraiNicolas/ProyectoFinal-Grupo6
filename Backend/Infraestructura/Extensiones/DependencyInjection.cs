@@ -62,16 +62,15 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
             }
 
             // DynamoDB Client
-            // DynamoDB Client
             var dynamoDbServiceUrl = config.GetValue<string>("DynamoDB:ServiceUrl", "http://localhost:8000");
             services.AddSingleton<IAmazonDynamoDB>(sp =>
             {
                 var dynamoConfig = new AmazonDynamoDBConfig
                 {
                     ServiceURL = dynamoDbServiceUrl,
-                    // Falla rapido si DynamoDB Local no esta disponible (evita bloquear el arranque).
-                    Timeout = TimeSpan.FromSeconds(3),
-                    MaxErrorRetry = 0
+                    // Timeout corto para fallar rapido si el contenedor no esta listo.
+                    // El AWS SDK reintenta automaticamente errores transitorios (default 3).
+                    Timeout = TimeSpan.FromSeconds(5)
                 };
                 return new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
             });

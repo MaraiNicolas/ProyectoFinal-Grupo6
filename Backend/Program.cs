@@ -72,24 +72,34 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Intentar crear la tabla AuditLogs en DynamoDB solo si NO estamos usando el mock.
-// Si DynamoDB Local no esta disponible, no debe bloquear el arranque (timeout corto).
+// Si DynamoDB Local no esta disponible al arrancar (todavia booteando), reintenta
+// varias veces antes de rendirse. Si igual falla, no bloquea el arranque: el
+// DynamoDbAuditLogService es resiliente y reintenta crear la tabla en el primer
+// PutItem que falle con ResourceNotFoundException.
 var useMockAudit = app.Configuration.GetValue<bool>("AuditLog:UseMock", true);
 if (!useMockAudit)
 {
-    try
+    var dynamoClient = app.Services.GetRequiredService<IAmazonDynamoDB>();
+    const int maxIntentos = 6;
+    var creada = false;
+    for (var intento = 1; intento <= maxIntentos && !creada; intento++)
     {
-        var dynamoClient = app.Services.GetRequiredService<IAmazonDynamoDB>();
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await DynamoDbInitializer.EnsureAuditLogsTableAsync(dynamoClient, cts.Token);
-        Console.WriteLine("Tabla AuditLogs verificada/creada en DynamoDB.");
-    }
-    catch (OperationCanceledException)
-    {
-        Console.WriteLine("Timeout al conectar con DynamoDB. Verifica que DynamoDB Local este corriendo en el ServiceUrl configurado.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error al inicializar DynamoDB: {ex.Message}");
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await DynamoDbInitializer.EnsureAuditLogsTableAsync(dynamoClient, cts.Token);
+            Console.WriteLine($"Tabla AuditLogs verificada/creada en DynamoDB (intento {intento}).");
+            creada = true;
+        }
+        catch (Exception ex) when (intento < maxIntentos)
+        {
+            Console.WriteLine($"Intento {intento}/{maxIntentos} fallido al inicializar DynamoDB: {ex.Message}. Reintentando en 2s...");
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"No se pudo inicializar DynamoDB tras {maxIntentos} intentos: {ex.Message}. El servicio reintentara en cada evento de auditoria.");
+        }
     }
 }
 else

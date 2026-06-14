@@ -60,11 +60,25 @@ deploy: con **Docker Compose** (recomendado) o instalacion tradicional en el hos
 El repositorio incluye en la raiz:
 
 ```
-docker-compose.yml      <- orquesta backend + frontend
+docker-compose.yml      <- orquesta backend + frontend + dynamodb-local
 .env.example            <- plantilla de variables (commiteada)
 Backend/Dockerfile      <- imagen de la API
 Frontend/Dockerfile     <- imagen del frontend (Nginx + build de Vite)
 ```
+
+Servicios que levanta:
+
+| Servicio | Imagen | Puerto host | Para que |
+|---|---|---|---|
+| `proyectofinal-grupo6.api` | construida desde `Backend/Dockerfile` | 8080 | API REST |
+| `frontend` | construida desde `Frontend/Dockerfile` | 3000 | SPA React (Nginx) |
+| `dynamodb-local` | `amazon/dynamodb-local:latest` | 8000 | Almacena AuditLogs |
+
+> **AWS DynamoDB real en lugar del contenedor:** si el cliente prefiere usar
+> AWS DynamoDB en la nube, eliminar el servicio `dynamodb-local` del
+> `docker-compose.yml` y setear `DYNAMODB_SERVICE_URL` apuntando al endpoint
+> regional (ej: `https://dynamodb.us-east-1.amazonaws.com`) ademas de las
+> credenciales AWS estandar (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`).
 
 ### 3.2 Configurar variables de entorno
 
@@ -142,8 +156,17 @@ docker compose up -d --build
 Esto:
 1. Construye la imagen del backend (`Backend/Dockerfile`).
 2. Construye la imagen del frontend pasando `VITE_API_URL` como build arg.
-3. Levanta ambos contenedores en background.
-4. Backend queda en `http://localhost:8080`, frontend en `http://localhost:3000`.
+3. Descarga `amazon/dynamodb-local:latest` (solo la primera vez).
+4. Levanta los 3 contenedores en background.
+5. Backend queda en `http://localhost:8080`, frontend en `http://localhost:3000`,
+   DynamoDB Local en `http://localhost:8000` (opcional, solo para inspeccion).
+
+Los AuditLogs se persisten en el volumen Docker `dynamodb-data`. Para borrar
+todos los logs (resetear la auditoria):
+
+```bash
+docker compose down -v
+```
 
 ### 3.4 Verificar que arranco
 
@@ -151,6 +174,12 @@ Esto:
 docker compose ps
 docker compose logs proyectofinal-grupo6.api
 docker compose logs frontend
+docker compose logs dynamodb-local
+```
+
+En los logs del backend, si `AuditLog__UseMock=false`, deberias ver:
+```
+Tabla AuditLogs verificada/creada en DynamoDB.
 ```
 
 ### 3.5 Cambiar configuracion

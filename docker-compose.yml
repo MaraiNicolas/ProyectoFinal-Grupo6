@@ -28,6 +28,12 @@ services:
       AuditLog__UseMock: "${AUDIT_USE_MOCK:-true}"
       Email__UseMock: "${EMAIL_USE_MOCK:-true}"
 
+      # --- DynamoDB (auditoria) ---
+      # Apunta al servicio dynamodb-local del compose. Ignorado si AuditLog__UseMock=true.
+      DynamoDB__ServiceUrl: "${DYNAMODB_SERVICE_URL:-http://dynamodb-local:8000}"
+    depends_on:
+      - dynamodb-local
+
   # Bloque de React-Frontend
   frontend:
     image: react-frontend
@@ -43,3 +49,21 @@ services:
       - "3000:80"  # Port default: http://localhost:3000
     depends_on:
       - proyectofinal-grupo6.api
+
+  # Bloque de DynamoDB Local (auditoria)
+  # Se usa solo si AuditLog__UseMock=false. En produccion con AWS DynamoDB real,
+  # cambiar DynamoDB__ServiceUrl al endpoint regional y quitar este servicio.
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    user: root
+    working_dir: /home/dynamodblocal
+    ports:
+      - "${DYNAMODB_PORT:-8000}:8000"   # Expuesto para inspeccionar desde el host (opcional)
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+
+volumes:
+  # Persiste los AuditLogs entre restarts del contenedor dynamodb-local.
+  dynamodb-data:

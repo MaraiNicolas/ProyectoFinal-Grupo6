@@ -7,6 +7,11 @@ WORKDIR /app
 ARG VITE_API_URL=http://localhost:8080/api
 ENV VITE_API_URL=$VITE_API_URL
 
+# Si "true", la pagina /login muestra los tokens mock como botones para
+# facilitar el testing manual del SSO en desarrollo. Default: false (produccion).
+ARG VITE_SHOW_MOCK_SSO=false
+ENV VITE_SHOW_MOCK_SSO=$VITE_SHOW_MOCK_SSO
+
 COPY package*.json ./
 RUN npm install
 COPY . .

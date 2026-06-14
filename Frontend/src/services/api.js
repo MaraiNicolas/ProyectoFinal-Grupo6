@@ -1,5 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "https://localhost:7289/api";
 
+
 function getToken() {
   return localStorage.getItem("token");
 }
@@ -14,7 +15,9 @@ async function request(path, options = {}) {
   if (response.status === 401) {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
-    window.location.href = "/login";
+    // Sin login local: el reingreso es desde Finnegans GO. Mostramos la pagina
+    // de SSO sin token para que muestre el mensaje "Falta access_token".
+    window.location.href = "/auth/sso";
     return;
   }
 
@@ -22,32 +25,50 @@ async function request(path, options = {}) {
   return response.json();
 }
 
-// --- Auth ---
-export async function login(email, password) {
-  const data = await request("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-  if (data?.token) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("usuario", JSON.stringify(data.usuario));
-  }
-  return data;
-}
-
-// SSO con Finnegans: valida el access_token recibido en la URL contra el backend.
+// --- Auth (SSO Finnegans) ---
+//
+// El access_token recibido en la URL es el unico credencial de la sesion.
+// El backend lo valida contra Finnegans y, si es OK, retorna los datos del
+// usuario (sin emitir token propio). Guardamos el access_token tal cual y lo
+// enviamos como Bearer en cada request posterior.
 export async function ssoLogin(accessToken) {
-  const data = await request(
-    `/auth/sso?access_token=${encodeURIComponent(accessToken)}`,
-  );
-  if (data?.token) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("usuario", JSON.stringify(data.usuario));
+  // Guardamos el token ANTES de la request: el handler del backend lo valida
+  // contra Finnegans para responder /auth/sso. Si la validacion falla, el
+  // catch limpia el localStorage.
+  localStorage.setItem("token", accessToken);
+  try {
+    const data = await request(
+      `/auth/sso?access_token=${encodeURIComponent(accessToken)}`,
+    );
+    if (data?.usuario) {
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
+      return data;
+    }
+    // Backend respondio 200 pero sin usuario (caso teorico) -> tratamos como error
+    localStorage.removeItem("token");
+    return data;
+  } catch (err) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    throw err;
   }
-  return data;
 }
 
-export function logout() {
+export async function logout() {
+  const token = getToken();
+  if (token) {
+    // Best-effort: avisamos al backend para que invalide la entrada del cache.
+    // No esperamos exito; si falla, el token sigue siendo aceptado hasta que
+    // expire el TTL del cache (default 5 min).
+    try {
+      await fetch(
+        `${API_URL}/auth/logout?access_token=${encodeURIComponent(token)}`,
+        { method: "POST" },
+      );
+    } catch {
+      // ignorar
+    }
+  }
   localStorage.removeItem("token");
   localStorage.removeItem("usuario");
 }

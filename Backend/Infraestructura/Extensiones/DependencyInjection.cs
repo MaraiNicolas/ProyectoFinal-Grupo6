@@ -87,17 +87,25 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
                 services.AddScoped<IAuditLogService, DynamoDbAuditLogService>();
             }
 
-            // Finnegans SSO: cliente HTTP que apunta a la API del cliente.
-            // BaseUrl configurable via appsettings.json (seccion Finnegans) o variable
-            // de entorno Finnegans__BaseUrl (ej: http://servicios.finneg.com).
-            services.AddHttpClient<IFinnegansAuthService, FinnegansAuthService>((sp, client) =>
+            // Finnegans SSO: mock o cliente HTTP real segun configuracion.
+            // Mock: tokens predefinidos para desarrollo local sin credenciales reales.
+            // Real: cliente HTTP tipado con BaseUrl configurable via Finnegans__BaseUrl.
+            var useMockFinnegans = config.GetValue<bool>("Finnegans:UseMock", false);
+            if (useMockFinnegans)
             {
-                var cfg = sp.GetRequiredService<IConfiguration>();
-                var baseUrl = cfg["Finnegans:BaseUrl"];
-                if (!string.IsNullOrWhiteSpace(baseUrl))
-                    client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromSeconds(15);
-            });
+                services.AddScoped<IFinnegansAuthService, MockFinnegansAuthService>();
+            }
+            else
+            {
+                services.AddHttpClient<IFinnegansAuthService, FinnegansAuthService>((sp, client) =>
+                {
+                    var cfg = sp.GetRequiredService<IConfiguration>();
+                    var baseUrl = cfg["Finnegans:BaseUrl"];
+                    if (!string.IsNullOrWhiteSpace(baseUrl))
+                        client.BaseAddress = new Uri(baseUrl);
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                });
+            }
 
             // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));

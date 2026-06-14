@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using ProyectoFinal_Grupo6.Api.Infraestructura.Auth;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones;
 using Amazon.DynamoDBv2;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Servicios;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,32 +41,25 @@ builder.Services.AddCors(options =>
 );
 builder.Services.AddControllers();
 
-// Autenticacion JWT
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Falta configuracion 'Jwt:Key'. Definirla en appsettings.Development.json o como variable de entorno Jwt__Key (minimo 32 caracteres).");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"]
-    ?? throw new InvalidOperationException("Falta configuracion 'Jwt:Issuer'.");
-var jwtAudience = builder.Configuration["Jwt:Audience"]
-    ?? throw new InvalidOperationException("Falta configuracion 'Jwt:Audience'.");
+// Cache de validacion de tokens de Finnegans. Tope de entradas para evitar que
+// el cache crezca sin limites (cada entrada usa Size=1).
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 10_000;
+});
 
-if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
-    throw new InvalidOperationException("'Jwt:Key' debe tener al menos 32 caracteres (256 bits) para HS256.");
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
+// Autenticacion: esquema custom que valida access_tokens de Finnegans.
+// No emite JWT propio; el access_token de Finnegans es la unica fuente de verdad
+// de la sesion. El handler cachea el resultado de la validacion por CacheTtl
+// (default 5 min, configurable via Finnegans__CacheTtlMinutes).
+builder.Services.AddAuthentication(FinnegansAuthDefaults.AuthenticationScheme)
+    .AddScheme<FinnegansAuthenticationOptions, FinnegansAuthenticationHandler>(
+        FinnegansAuthDefaults.AuthenticationScheme,
+        options =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey))
-        };
-    });
+            var ttlMinutes = builder.Configuration.GetValue<int>("Finnegans:CacheTtlMinutes", 5);
+            options.CacheTtl = TimeSpan.FromMinutes(ttlMinutes);
+        });
 builder.Services.AddAuthorization();
 builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();

@@ -31,6 +31,11 @@ La solucion son dos componentes:
 Ambos se entregan como codigo fuente desde el repositorio Git. Hay dos modos de
 deploy: con **Docker Compose** (recomendado) o instalacion tradicional en el host.
 
+> **Modelo de autenticacion:** la app NO emite tokens propios. El `access_token`
+> que recibe el usuario desde Finnegans GO es la unica credencial de la sesion;
+> el backend lo valida contra la API de Finnegans en cada request (con cache de
+> TTL configurable para no golpear a Finnegans en cada llamada).
+
 ---
 
 ## 2. Requisitos del servidor
@@ -80,6 +85,8 @@ Editar `.env` con los valores reales del entorno:
 ```sh
 # --- SSO Finnegans ---
 FINNEGANS_ENABLED=true
+# En produccion siempre "false". El mock se usa solo en desarrollo local.
+FINNEGANS_USE_MOCK=false
 BASE_GO_URL=https://servicios.cliente.com
 FINNEGANS_INVITADOS_ENDPOINT=/api/1/invitados
 FINNEGANS_AUTO_CREATE=false
@@ -88,11 +95,11 @@ FINNEGANS_AUTO_CREATE=false
 # autenticados pueden acceder a todo), pero el campo queda preconfigurado
 # para habilitar autorizacion por rol en el futuro sin tocar el deploy.
 FINNEGANS_ROL_DEFAULT=Admin
-
-# --- JWT (CRITICO: generar clave nueva, minimo 32 chars) ---
-JWT_KEY=<clave-secreta-generada-con-openssl-rand-base64-48>
-JWT_ISSUER=ProyectoFinalGrupo6
-JWT_AUDIENCE=ProyectoFinalGrupo6Clients
+# TTL (minutos) del cache de validacion de tokens. Define el peor caso de
+# delay entre que Finnegans revoca un token y nuestro backend deja de
+# aceptarlo. Default: 5. Bajarlo si el cliente requiere revocacion mas
+# rapida (a costo de mas llamadas a la API de Finnegans).
+FINNEGANS_CACHE_TTL_MINUTES=5
 
 # --- Servicios externos ---
 HIKCENTRAL_USE_MOCK=false
@@ -101,6 +108,9 @@ EMAIL_USE_MOCK=false
 
 # --- Frontend ---
 VITE_API_URL=https://api.cliente.com/api
+# En produccion debe ser "false". Si esta en "true", la pagina /login muestra
+# botones con tokens mock que en produccion no funcionan (el mock esta apagado).
+VITE_SHOW_MOCK_SSO=false
 ```
 
 > **Importante:** el archivo `.env` esta en `.gitignore` y **no debe commitearse**.
@@ -111,12 +121,17 @@ VITE_API_URL=https://api.cliente.com/api
 - **`BASE_GO_URL`**: este valor no viene precargado en el repo a proposito.
   Debe ser provisto por el cliente para evitar exponer URLs internas en GitHub.
   Si la variable falta, el backend logueara un warning al validar tokens.
-- **`JWT_KEY`**: generar una clave nueva con `openssl rand -base64 48`. NO usar
-  el placeholder del `.env.example`. Si esta variable falta, `docker compose up`
-  falla con un mensaje explicito (es intencional, no es un bug).
+- **`FINNEGANS_USE_MOCK`**: DEBE estar en `false` en produccion. Si por error
+  queda en `true`, el backend usa tokens hardcodeados (`mock-admin-token`,
+  etc.) y cualquiera con ese string puede autenticarse como admin.
+- **`VITE_SHOW_MOCK_SSO`**: DEBE estar en `false` en produccion. Solo controla
+  si la pagina `/login` muestra los botones de tokens mock; no afecta la
+  validacion real, pero expone informacion innecesaria.
 - **`.env` nunca debe commitearse**: ya esta incluido en `.gitignore`.
-- Si rotan `JWT_KEY` en produccion, todos los JWT activos quedan invalidados
-  inmediatamente (los usuarios deben reloguearse).
+- **Sesiones del usuario**: la sesion vive lo que dure el `access_token` de
+  Finnegans. Nuestro backend NO emite tokens propios; cuando Finnegans revoca
+  o expira el token, el usuario queda deslogueado en el proximo cache miss
+  (peor caso: `FINNEGANS_CACHE_TTL_MINUTES` minutos despues de la revocacion).
 
 ### 3.3 Construir y levantar
 
@@ -142,8 +157,8 @@ docker compose logs frontend
 
 | Tipo de cambio | Comando |
 |---|---|
-| Variables del backend (`FINNEGANS_*`, `JWT_*`, etc.) | Editar `.env` + `docker compose up -d` |
-| `VITE_API_URL` (frontend) | Editar `.env` + `docker compose up -d --build frontend` |
+| Variables del backend (`FINNEGANS_*`, etc.) | Editar `.env` + `docker compose up -d` |
+| `VITE_API_URL` o `VITE_SHOW_MOCK_SSO` (frontend) | Editar `.env` + `docker compose up -d --build frontend` |
 | Codigo fuente | `docker compose up -d --build` |
 
 > El frontend requiere rebuild porque Vite **inlinea** las variables en el bundle
@@ -174,16 +189,15 @@ ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://+:5000
 
 Finnegans__Enabled=true
+Finnegans__UseMock=false
 Finnegans__BaseUrl=https://servicios.cliente.com
 Finnegans__InvitadosEndpoint=/api/1/invitados
 Finnegans__AutoCreateUsuarios=false
 # Rol por defecto para usuarios autocreados que NO son admin en Finnegans.
 # Hoy no se usa para autorizar endpoints (queda preconfigurado para a futuro).
 Finnegans__RolPorDefecto=Admin
-
-Jwt__Key=<clave-secreta-de-al-menos-32-caracteres>
-Jwt__Issuer=ProyectoFinalGrupo6
-Jwt__Audience=ProyectoFinalGrupo6Clients
+# Opcional. Default: 5 minutos.
+Finnegans__CacheTtlMinutes=5
 
 HikCentral__UseMock=false
 HikCentral__BaseUrl=https://<ip-hikcentral>
@@ -204,8 +218,8 @@ Email__UseMock=false
   <environmentVariables>
     <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
     <environmentVariable name="Finnegans__Enabled" value="true" />
+    <environmentVariable name="Finnegans__UseMock" value="false" />
     <environmentVariable name="Finnegans__BaseUrl" value="https://servicios.cliente.com" />
-    <environmentVariable name="Jwt__Key" value="..." />
   </environmentVariables>
 </aspNetCore>
 ```
@@ -217,8 +231,8 @@ WorkingDirectory=/var/www/proyecto-final
 ExecStart=/usr/bin/dotnet /var/www/proyecto-final/ProyectoFinal-Grupo6.Api.dll
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=Finnegans__Enabled=true
+Environment=Finnegans__UseMock=false
 Environment=Finnegans__BaseUrl=https://servicios.cliente.com
-Environment=Jwt__Key=...
 ```
 
 ### 4.3 Publicar el backend
@@ -262,7 +276,9 @@ https://app.cliente.com/auth/sso?access_token={ACCESS_TOKEN_DEL_USUARIO}
 ```
 
 Donde `{ACCESS_TOKEN_DEL_USUARIO}` es el mismo token que Finnegans GO usa para
-identificar al usuario en su propio ecosistema.
+identificar al usuario en su propio ecosistema. La SPA lo guarda en
+`localStorage` y lo envia como `Authorization: Bearer ...` en cada request al
+backend.
 
 ---
 
@@ -287,17 +303,23 @@ La primera vez que un usuario ingresa, se crea automaticamente:
 - **Apellido**: vacio (editable luego desde `/admin`)
 - **Rol**: `Admin` si Finnegans devuelve `admin: true`, sino `FINNEGANS_ROL_DEFAULT`
 
+> El auto-create solo aplica en el endpoint `GET /api/auth/sso`. Si un usuario
+> es eliminado de la DB despues de tener una sesion activa, el handler de auth
+> respondera 401 en el proximo cache miss (no auto-recrea).
+
 ---
 
 ## 7. Checklist de deploy
 
 ### Generico
 - [ ] `FINNEGANS_ENABLED=true` en el entorno
-- [ ] `JWT_KEY` generado con minimo 32 caracteres aleatorios
+- [ ] `FINNEGANS_USE_MOCK=false` (CRITICO en produccion)
+- [ ] `VITE_SHOW_MOCK_SSO=false` en el build del frontend
 - [ ] El servidor puede resolver y conectarse al `BASE_GO_URL`
 - [ ] HTTPS configurado en frontend y backend (certificado valido)
 - [ ] Link en Finnegans GO apunta a `https://app.cliente.com/auth/sso?access_token=...`
 - [ ] Usuarios dados de alta (o `FINNEGANS_AUTO_CREATE=true`)
+- [ ] `FINNEGANS_CACHE_TTL_MINUTES` revisado segun politica de revocacion del cliente
 - [ ] HikCentral con `BaseUrl`, `PartnerKey` y `PartnerSecret` reales
 - [ ] SMTP configurado para envio de invitaciones
 
@@ -339,6 +361,15 @@ curl -i "https://api.cliente.com/api/auth/sso?access_token=fake"
 # Sin parametro
 curl -i "https://api.cliente.com/api/auth/sso"
 # -> HTTP/1.1 400 Bad Request
+
+# Endpoint protegido con token invalido (ejercita el handler de auth)
+curl -i -H "Authorization: Bearer token-invalido" \
+     "https://api.cliente.com/api/invitaciones"
+# -> HTTP/1.1 401 Unauthorized
+
+# Endpoint protegido sin token
+curl -i "https://api.cliente.com/api/invitaciones"
+# -> HTTP/1.1 401 Unauthorized
 ```
 
 ### 8.3 Test end-to-end
@@ -369,6 +400,7 @@ docker compose up -d proyectofinal-grupo6.api
 Para incidencias contactar al equipo de desarrollo con:
 
 - Logs del backend (`docker compose logs` o `journalctl -u proyecto-final`)
-- Valores configurados **sin exponer** `JWT_KEY`, `PartnerSecret` ni credenciales SMTP
+- Valores configurados **sin exponer** credenciales de Finnegans, `PartnerSecret`
+  de HikCentral, ni credenciales SMTP
 - Resultado de los smoke tests del paso 8.2
 - Captura del error en el navegador (incluyendo Network tab)

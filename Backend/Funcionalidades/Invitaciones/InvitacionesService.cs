@@ -169,6 +169,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
                 foreach (var iv in agregados)
                 {
+                    await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId,
+                        invitacionId: invitacion.Guid,
+                        usuarioEmail: usuario?.Email,
+                        visitanteEmail: iv.EmailVisitante,
+                        invitacionTitulo: invitacion.Titulo);
+
                     await _emailService.EnviarLinkRegistro(new EmailRegistroRequest
                     {
                         DestinatarioEmail = iv.EmailVisitante,

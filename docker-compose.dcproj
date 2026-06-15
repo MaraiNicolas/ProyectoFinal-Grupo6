@@ -18,5 +18,6 @@
     <None Include="docker-compose.yml" />
     <None Include="docs\SSO-Finnegans-Deployment.md" />
     <None Include="docs\SSO-Finnegans-Paso-a-Paso.md" />
+    <None Include="Frontend\.dockerignore" />
   </ItemGroup>
 </Project>

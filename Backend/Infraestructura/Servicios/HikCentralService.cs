@@ -12,6 +12,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
     public class HikCentralService : IHikCentralService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<HikCentralService> _logger;
         private readonly string _partnerKey;
         private readonly string _partnerSecret;
         private readonly string _baseUrl;
@@ -20,9 +21,10 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
         private const string ENDPOINT_APPOINTMENT = "/artemis/api/visitor/v1/appointment";
         private const string ENDPOINT_VERSION = "/artemis/api/common/v1/version";
 
-        public HikCentralService(HttpClient httpClient, IConfiguration configuration)
+        public HikCentralService(HttpClient httpClient, IConfiguration configuration, ILogger<HikCentralService> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
             _partnerKey = configuration["HikCentral:PartnerKey"] ?? "";
             _partnerSecret = configuration["HikCentral:PartnerSecret"] ?? "";
             _baseUrl = configuration["HikCentral:BaseUrl"] ?? "";
@@ -131,10 +133,34 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
             {
                 var response = await _httpClient.SendAsync(request);
                 var content = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("HikCentral respondio {StatusCode} en {Path}. Body: {Body}",
+                        (int)response.StatusCode, path, content);
+                    return null;
+                }
+
                 return JsonDocument.Parse(content);
             }
-            catch
+            catch (HttpRequestException ex)
             {
+                _logger.LogError(ex, "Error de red al llamar a HikCentral {Path}. Verifique la VPN y la conectividad con {BaseUrl}.", path, _baseUrl);
+                return null;
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError(ex, "Timeout al llamar a HikCentral {Path}.", path);
+                return null;
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "La respuesta de HikCentral {Path} no es un JSON valido.", path);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al llamar a HikCentral {Path}.", path);
                 return null;
             }
         }

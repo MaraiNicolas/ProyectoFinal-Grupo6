@@ -91,7 +91,11 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             if (fecha.HasValue)
                 query = query.Where(i => i.Fecha.Date == fecha.Value.Date);
 
-            return await query.OrderByDescending(i => i.Fecha).ThenByDescending(i => i.HoraInicio).ToListAsync();
+            var invitaciones = await query.OrderByDescending(i => i.Fecha).ToListAsync();
+            return invitaciones
+                .OrderByDescending(i => i.Fecha)
+                .ThenByDescending(i => i.HoraInicio)
+                .ToList();
         }
 
         public async Task<Invitacion?> ObtenerInvitacionPorId(Guid id)

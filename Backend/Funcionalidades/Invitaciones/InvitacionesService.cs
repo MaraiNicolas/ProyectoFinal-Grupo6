@@ -52,8 +52,14 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             await _context.SaveChangesAsync();
 
             var usuario = await _context.Set<Usuario>().FindAsync(usuarioId);
-            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId, invitacionId: invitacion.Guid,
-                usuarioEmail: usuario?.Email, invitacionTitulo: invitacion.Titulo);
+            foreach (var visitante in invitacion.Visitantes)
+            {
+                await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId,
+                    invitacionId: invitacion.Guid,
+                    usuarioEmail: usuario?.Email,
+                    visitanteEmail: visitante.EmailVisitante,
+                    invitacionTitulo: invitacion.Titulo);
+            }
 
             var destino = await _context.Set<Destino>().FindAsync(invitacion.DestinoId);
             var nombreAnfitrion = usuario != null ? $"{usuario.Nombre} {usuario.Apellido}" : "Anfitrion";

@@ -12,6 +12,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
 
+      # --- Base de datos (SQLite por defecto) ---
+      # El archivo se persiste en el volumen Docker "sqlite-data" montado en /app/data.
+      # Para migrar a otro motor (PostgreSQL, SQL Server), cambiar el connection string
+      # y reemplazar UseSqlite por UseNpgsql/UseSqlServer en DependencyInjection.cs.
+      ConnectionStrings__DefaultConnection: "${DB_CONNECTION_STRING:-Data Source=/app/data/grupo6.db}"
+
       # --- SSO Finnegans ---
       # Cambiar Finnegans__Enabled a "true" para habilitar el SSO.
       # Ver Backend/Documents/SSO-Finnegans-Deployment.md para detalles.
@@ -31,6 +37,9 @@ services:
       # --- DynamoDB (auditoria) ---
       # Apunta al servicio dynamodb-local del compose. Ignorado si AuditLog__UseMock=true.
       DynamoDB__ServiceUrl: "${DYNAMODB_SERVICE_URL:-http://dynamodb-local:8000}"
+    volumes:
+      # Persiste el archivo SQLite (datos transaccionales) entre restarts del contenedor.
+      - sqlite-data:/app/data
     depends_on:
       - dynamodb-local
 
@@ -65,5 +74,7 @@ services:
       - dynamodb-data:/home/dynamodblocal/data
 
 volumes:
+  # Persiste los datos transaccionales (usuarios, invitaciones, visitantes, etc.).
+  sqlite-data:
   # Persiste los AuditLogs entre restarts del contenedor dynamodb-local.
   dynamodb-data:

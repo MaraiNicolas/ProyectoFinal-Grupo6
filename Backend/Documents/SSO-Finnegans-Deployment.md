@@ -12,12 +12,13 @@
 1. [Que reciben](#1-que-reciben)
 2. [Requisitos del servidor](#2-requisitos-del-servidor)
 3. [Opcion A - Deploy con Docker Compose (recomendado)](#3-opcion-a---deploy-con-docker-compose-recomendado)
-4. [Opcion B - Deploy tradicional (sin Docker)](#4-opcion-b---deploy-tradicional-sin-docker)
-5. [Configurar el acceso desde Finnegans GO](#5-configurar-el-acceso-desde-finnegans-go)
-6. [Alta de usuarios](#6-alta-de-usuarios)
-7. [Checklist de deploy](#7-checklist-de-deploy)
-8. [Verificacion post-deploy](#8-verificacion-post-deploy)
-9. [Soporte](#9-soporte)
+4. [Base de datos (SQLite)](#4-base-de-datos-sqlite)
+5. [Opcion B - Deploy tradicional (sin Docker)](#5-opcion-b---deploy-tradicional-sin-docker)
+6. [Configurar el acceso desde Finnegans GO](#6-configurar-el-acceso-desde-finnegans-go)
+7. [Alta de usuarios](#7-alta-de-usuarios)
+8. [Checklist de deploy](#8-checklist-de-deploy)
+9. [Verificacion post-deploy](#9-verificacion-post-deploy)
+10. [Soporte](#10-soporte)
 
 ---
 
@@ -73,6 +74,20 @@ Servicios que levanta:
 | `proyectofinal-grupo6.api` | construida desde `Backend/Dockerfile` | 8080 | API REST |
 | `frontend` | construida desde `Frontend/Dockerfile` | 3000 | SPA React (Nginx) |
 | `dynamodb-local` | `amazon/dynamodb-local:latest` | 8000 | Almacena AuditLogs |
+
+Volumenes persistentes (sobreviven a `docker compose down`, se borran con
+`docker compose down -v`):
+
+| Volumen | Contenedor | Que guarda |
+|---|---|---|
+| `sqlite-data` | `proyectofinal-grupo6.api` | Base SQLite con usuarios, invitaciones, visitantes, destinos |
+| `dynamodb-data` | `dynamodb-local` | Tabla AuditLogs |
+
+> **Base de datos relacional:** por defecto el sistema usa **SQLite** (archivo
+> en `/app/data/grupo6.db`). Es adecuado para deployments con una sola
+> instancia del backend y volumen de datos moderado. Si el cliente necesita
+> alta concurrencia, multiples instancias o alta disponibilidad, ver la
+> seccion 4 para migrar a Amazon RDS (PostgreSQL o SQL Server).
 
 > **AWS DynamoDB real en lugar del contenedor:** si el cliente prefiere usar
 > AWS DynamoDB en la nube, eliminar el servicio `dynamodb-local` del
@@ -204,9 +219,140 @@ contenedores que termine SSL y haga proxy a `localhost:8080` y `localhost:3000`.
 
 ---
 
-## 4. Opcion B - Deploy tradicional (sin Docker)
+## 4. Base de datos (SQLite)
 
-### 4.1 Backend
+### 4.1 Modelo de persistencia
+
+El sistema usa **dos almacenamientos distintos**:
+
+| Datos | Motor | Donde vive |
+|---|---|---|
+| Usuarios, Visitantes, Invitaciones, Destinos, Configuracion | **SQLite** | Volumen Docker `sqlite-data`, archivo `/app/data/grupo6.db` |
+| AuditLogs | **DynamoDB Local** | Volumen Docker `dynamodb-data` |
+
+Esta separacion es deliberada: SQLite encaja con datos relacionales y baja
+concurrencia, mientras DynamoDB encaja con logs append-only de alto volumen.
+
+### 4.2 Inicializacion automatica
+
+El backend, al arrancar, ejecuta:
+
+1. `Database.EnsureCreated()`: si el archivo `grupo6.db` no existe, lo crea con
+   todas las tablas a partir del modelo C#. Si existe, no hace nada.
+2. `SeedData.Inicializar()`: si la tabla `Usuarios` esta vacia, inserta los
+   datos iniciales (admin@empresa.com, destinos por defecto, etc.). Si ya hay
+   datos, no hace nada.
+
+El cliente **NO necesita** ejecutar scripts SQL ni comandos `dotnet ef`. El
+primer `docker compose up -d` deja la base lista para usar.
+
+### 4.3 Backups (responsabilidad del cliente)
+
+El archivo SQLite vive en el volumen Docker `sqlite-data`. Para hacer un backup:
+
+```bash
+# Copiar el archivo desde el contenedor al host
+docker compose cp proyectofinal-grupo6.api:/app/data/grupo6.db ./backup-$(date +%Y%m%d).db
+
+# Para restaurar desde un backup
+docker compose cp ./backup-20260101.db proyectofinal-grupo6.api:/app/data/grupo6.db
+docker compose restart proyectofinal-grupo6.api
+```
+
+**Recomendacion:** configurar un cron diario en el servidor que copie el archivo
+a una ubicacion segura (S3, OneDrive corporativo, NAS, etc.). Ejemplo:
+
+```sh
+# /etc/cron.daily/backup-grupo6.sh
+#!/bin/bash
+cd /opt/proyectofinal-grupo6
+docker compose cp proyectofinal-grupo6.api:/app/data/grupo6.db \
+    /var/backups/grupo6/grupo6-$(date +%Y%m%d).db
+# Mantener solo los ultimos 30 backups
+find /var/backups/grupo6/ -name "grupo6-*.db" -mtime +30 -delete
+```
+
+### 4.4 Cambios de schema (limitacion)
+
+Como usamos `EnsureCreated` (no `Migrate`), **no hay versionado de schema
+incremental**. Si una nueva version del backend agrega/modifica entidades:
+
+- Si el archivo `grupo6.db` no existia ? se crea con el nuevo schema. OK.
+- Si el archivo ya existe ? `EnsureCreated` NO actualiza el schema. Las
+  consultas nuevas pueden fallar.
+
+**Workaround para upgrade:** hacer backup, eliminar el volumen y dejar que se
+recree:
+
+```bash
+docker compose cp proyectofinal-grupo6.api:/app/data/grupo6.db ./pre-upgrade.db
+docker compose down
+docker volume rm $(docker compose ps -aq --format '{{.Project}}')_sqlite-data
+docker compose up -d --build
+# Re-importar datos manualmente desde pre-upgrade.db si es necesario
+```
+
+Si en el futuro el equipo necesita versionado formal de schema, migrar a
+`dotnet ef migrations` (instalar la tool, generar migraciones, commitearlas y
+cambiar `EnsureCreated` por `Migrate` en `Program.cs`).
+
+### 4.5 Migracion a Amazon RDS (opcional, para escalar)
+
+SQLite es adecuado para deployments con **una sola instancia** del backend y
+volumen moderado. Si el cliente necesita:
+
+- Multiples instancias del backend (load balancer, alta disponibilidad).
+- Mas de 50-100 usuarios concurrentes.
+- Backups gestionados con snapshots automaticos.
+
+Recomendamos migrar a **Amazon RDS** (mismo proveedor que ya usan para DynamoDB).
+La migracion requiere pocos cambios:
+
+**Paso 1: Crear instancia RDS** (PostgreSQL recomendado por costo, SQL Server si
+prefieren mantener stack Microsoft).
+
+**Paso 2: Agregar el paquete EF Core correspondiente**:
+
+```bash
+# Para PostgreSQL
+dotnet add Backend/ProyectoFinal-Grupo6.Api.csproj package Npgsql.EntityFrameworkCore.PostgreSQL --version 9.0.4
+
+# Para SQL Server (ya esta instalado)
+# Microsoft.EntityFrameworkCore.SqlServer
+```
+
+**Paso 3: Cambiar 1 linea en `DependencyInjection.cs`**:
+
+```csharp
+// Antes:
+options.UseSqlite(connStr);
+// Despues (PostgreSQL):
+options.UseNpgsql(connStr);
+// Despues (SQL Server):
+options.UseSqlServer(connStr);
+```
+
+**Paso 4: Setear `DB_CONNECTION_STRING` en `.env`**:
+
+```sh
+# PostgreSQL
+DB_CONNECTION_STRING=Host=mi-rds.us-east-1.rds.amazonaws.com;Database=grupo6;Username=admin;Password=...
+
+# SQL Server
+DB_CONNECTION_STRING=Server=mi-rds.us-east-1.rds.amazonaws.com,1433;Database=grupo6;User Id=admin;Password=...;TrustServerCertificate=true
+```
+
+**Paso 5: Quitar el volumen `sqlite-data`** del `docker-compose.yml`.
+
+**Paso 6: `docker compose up -d --build`** ? el backend al arrancar crea las
+tablas en RDS automaticamente (`EnsureCreated` funciona para cualquier provider
+relacional).
+
+---
+
+## 5. Opcion B - Deploy tradicional (sin Docker)
+
+### 5.1 Backend
 
 ASP.NET Core lee variables de entorno automaticamente y sobrescriben los valores
 de `appsettings.json`. El separador entre seccion y clave son **dos guiones bajos**: `Seccion__Clave`.
@@ -239,7 +385,7 @@ DynamoDB__ServiceUrl=http://localhost:8000
 Email__UseMock=false
 ```
 
-### 4.2 Como setear las variables segun el host
+### 5.2 Como setear las variables segun el host
 
 **Windows Server / IIS:** en `web.config` bajo `<system.webServer>`:
 ```xml
@@ -264,7 +410,7 @@ Environment=Finnegans__UseMock=false
 Environment=Finnegans__BaseUrl=https://servicios.cliente.com
 ```
 
-### 4.3 Publicar el backend
+### 5.3 Publicar el backend
 
 Desde la maquina de build (con .NET SDK 9):
 ```bash
@@ -273,7 +419,7 @@ dotnet publish Backend/ProyectoFinal-Grupo6.Api.csproj -c Release -o ./publish
 
 Copiar `./publish` al servidor y ejecutar con `dotnet ProyectoFinal-Grupo6.Api.dll`.
 
-### 4.4 Frontend
+### 5.4 Frontend
 
 ```bash
 cd Frontend
@@ -295,7 +441,7 @@ location / {
 
 ---
 
-## 5. Configurar el acceso desde Finnegans GO
+## 6. Configurar el acceso desde Finnegans GO
 
 Una vez desplegado, el cliente debe agregar en su app interna un link que apunte
 a la URL de la SPA con el `access_token` del usuario:
@@ -311,7 +457,7 @@ backend.
 
 ---
 
-## 6. Alta de usuarios
+## 7. Alta de usuarios
 
 Hay dos modos segun el valor de `FINNEGANS_AUTO_CREATE`:
 
@@ -338,7 +484,7 @@ La primera vez que un usuario ingresa, se crea automaticamente:
 
 ---
 
-## 7. Checklist de deploy
+## 8. Checklist de deploy
 
 ### Generico
 - [ ] `FINNEGANS_ENABLED=true` en el entorno
@@ -351,32 +497,35 @@ La primera vez que un usuario ingresa, se crea automaticamente:
 - [ ] `FINNEGANS_CACHE_TTL_MINUTES` revisado segun politica de revocacion del cliente
 - [ ] HikCentral con `BaseUrl`, `PartnerKey` y `PartnerSecret` reales
 - [ ] SMTP configurado para envio de invitaciones
+- [ ] Cron de backup diario del archivo SQLite configurado (ver seccion 4.3)
 
 ### Solo Docker
 - [ ] Docker Engine y Compose v2 instalados
 - [ ] Archivo `.env` creado a partir de `.env.example` y completado
 - [ ] `.env` NO esta commiteado al repo
 - [ ] `docker compose up -d --build` ejecutado sin errores
+- [ ] Volumenes `sqlite-data` y `dynamodb-data` creados (verificar con `docker volume ls`)
 - [ ] Reverse proxy externo (Nginx/Traefik) configurado para HTTPS
 
 ### Solo deploy tradicional
 - [ ] .NET 9 ASP.NET Core Runtime instalado
 - [ ] Variables de entorno seteadas en el host (web.config / systemd / etc.)
+- [ ] `ConnectionStrings__DefaultConnection` apuntando a un archivo escribible
 - [ ] Frontend compilado con `VITE_API_URL` correcto
 - [ ] Servidor web con SPA fallback a `index.html`
 
 ---
 
-## 8. Verificacion post-deploy
+## 9. Verificacion post-deploy
 
-### 8.1 Smoke test del backend
+### 9.1 Smoke test del backend
 
 ```bash
 curl https://api.cliente.com/swagger/v1/swagger.json
 ```
 Debe responder con el JSON de OpenAPI.
 
-### 8.2 Smoke test del SSO
+### 9.2 Smoke test del SSO
 
 ```bash
 # Si FINNEGANS_ENABLED=false
@@ -401,7 +550,7 @@ curl -i "https://api.cliente.com/api/invitaciones"
 # -> HTTP/1.1 401 Unauthorized
 ```
 
-### 8.3 Test end-to-end
+### 9.3 Test end-to-end
 
 1. Loguearse en Finnegans GO con un usuario interno
 2. Click en el acceso a nuestra app
@@ -409,7 +558,7 @@ curl -i "https://api.cliente.com/api/invitaciones"
 4. Tras 1-2 segundos, debe quedar en `https://app.cliente.com/` autenticado
 5. El nombre del usuario en la barra superior debe coincidir con el email logueado
 
-### 8.4 Diagnostico con Docker
+### 9.4 Diagnostico con Docker
 
 ```bash
 # Logs en vivo
@@ -424,7 +573,7 @@ docker compose up -d proyectofinal-grupo6.api
 
 ---
 
-## 9. Soporte
+## 10. Soporte
 
 Para incidencias contactar al equipo de desarrollo con:
 

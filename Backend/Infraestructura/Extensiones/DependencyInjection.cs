@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.Abstracciones.RepositorioGenerico;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.Abstracciones.SqlConnections;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.UnitOfWork;
@@ -23,10 +24,33 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
     {
         public static IServiceCollection AddInfraestructure(this IServiceCollection services, IConfiguration config)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
+            // Persistencia relacional: SQLite por defecto (archivo en /app/data/grupo6.db
+            // dentro del contenedor, persistido en el volumen Docker "sqlite-data").
+            //
+            // El cliente puede cambiar a otro motor (PostgreSQL, SQL Server) en el futuro
+            // seteando ConnectionStrings__DefaultConnection y reemplazando UseSqlite por
+            // UseNpgsql / UseSqlServer (los paquetes EF Core respectivos estan disponibles
+            // o se agregan con dotnet add package).
+            //
+            // Para tests o desarrollo sin persistencia, setear ConnectionStrings:UseInMemory=true.
+            var useInMemory = config.GetValue<bool>("ConnectionStrings:UseInMemory", false);
+            if (useInMemory)
             {
-                options.UseInMemoryDatabase("Grupo6Db");
-            });
+                services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    options.UseInMemoryDatabase("Grupo6Db");
+                });
+            }
+            else
+            {
+                var connStr = config.GetConnectionString("DefaultConnection")
+                    ?? "Data Source=/app/data/grupo6.db";
+                services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlite(connStr);
+                });
+            }
+
             var assembly = Assembly.GetExecutingAssembly();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<InvitacionesService>();

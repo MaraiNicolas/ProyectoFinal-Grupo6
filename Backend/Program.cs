@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Auth;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
@@ -9,10 +10,6 @@ using ProyectoFinal_Grupo6.Api.Infraestructura.Servicios;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseInMemoryDatabase("Grupo6Db");
-});
 // Agregar servicios al contenedor
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -64,10 +61,27 @@ builder.Services.AddAuthorization();
 builder.Services.AddInfraestructure(builder.Configuration);
 var app = builder.Build();
 
-// Datos iniciales para MVP (se reinician al reiniciar la app)
+// Crear el schema de la base de datos al arrancar (idempotente: si las tablas
+// ya existen, no hace nada).
+//
+// Usamos EnsureCreated en lugar de Migrate para evitar que el cliente necesite
+// instalar la herramienta "dotnet-ef". La contrapartida es que EnsureCreated NO
+// soporta migracion incremental de schema: si cambian las entidades C# y la DB
+// ya existe, hay que borrar el archivo grupo6.db (o el volumen "sqlite-data")
+// para que se recree con el schema nuevo. Aceptable mientras el modelo este
+// estable; si en el futuro se necesita versionado de schema, migrar a Migrate
+// instalando "dotnet ef migrations add ..." y commiteando las migraciones.
+//
+// InMemory provider no soporta esquema relacional, por eso se omite en ese caso.
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (context.Database.IsRelational())
+    {
+        context.Database.EnsureCreated();
+    }
+    // Datos iniciales (admin, destinos, etc.). Idempotente: solo seed si la DB
+    // esta vacia, por lo que es seguro correrlo en cada arranque.
     SeedData.Inicializar(context);
 }
 

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.Abstracciones.RepositorioGenerico;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.Abstracciones.SqlConnections;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Repositorios.UnitOfWork;
@@ -23,10 +24,33 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
     {
         public static IServiceCollection AddInfraestructure(this IServiceCollection services, IConfiguration config)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
+            // Persistencia relacional: SQLite por defecto (archivo en /app/data/grupo6.db
+            // dentro del contenedor, persistido en el volumen Docker "sqlite-data").
+            //
+            // El cliente puede cambiar a otro motor (PostgreSQL, SQL Server) en el futuro
+            // seteando ConnectionStrings__DefaultConnection y reemplazando UseSqlite por
+            // UseNpgsql / UseSqlServer (los paquetes EF Core respectivos estan disponibles
+            // o se agregan con dotnet add package).
+            //
+            // Para tests o desarrollo sin persistencia, setear ConnectionStrings:UseInMemory=true.
+            var useInMemory = config.GetValue<bool>("ConnectionStrings:UseInMemory", false);
+            if (useInMemory)
             {
-                options.UseInMemoryDatabase("Grupo6Db");
-            });
+                services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    options.UseInMemoryDatabase("Grupo6Db");
+                });
+            }
+            else
+            {
+                var connStr = config.GetConnectionString("DefaultConnection")
+                    ?? "Data Source=/app/data/grupo6.db";
+                services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlite(connStr);
+                });
+            }
+
             var assembly = Assembly.GetExecutingAssembly();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<InvitacionesService>();
@@ -65,7 +89,13 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
             var dynamoDbServiceUrl = config.GetValue<string>("DynamoDB:ServiceUrl", "http://localhost:8000");
             services.AddSingleton<IAmazonDynamoDB>(sp =>
             {
-                var dynamoConfig = new AmazonDynamoDBConfig { ServiceURL = dynamoDbServiceUrl };
+                var dynamoConfig = new AmazonDynamoDBConfig
+                {
+                    ServiceURL = dynamoDbServiceUrl,
+                    // Timeout corto para fallar rapido si el contenedor no esta listo.
+                    // El AWS SDK reintenta automaticamente errores transitorios (default 3).
+                    Timeout = TimeSpan.FromSeconds(5)
+                };
                 return new AmazonDynamoDBClient("fakeAccessKey", "fakeSecretKey", dynamoConfig);
             });
 
@@ -80,7 +110,27 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
                 services.AddScoped<IAuditLogService, DynamoDbAuditLogService>();
             }
 
-           // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
+            // Finnegans SSO: mock o cliente HTTP real segun configuracion.
+            // Mock: tokens predefinidos para desarrollo local sin credenciales reales.
+            // Real: cliente HTTP tipado con BaseUrl configurable via Finnegans__BaseUrl.
+            var useMockFinnegans = config.GetValue<bool>("Finnegans:UseMock", false);
+            if (useMockFinnegans)
+            {
+                services.AddScoped<IFinnegansAuthService, MockFinnegansAuthService>();
+            }
+            else
+            {
+                services.AddHttpClient<IFinnegansAuthService, FinnegansAuthService>((sp, client) =>
+                {
+                    var cfg = sp.GetRequiredService<IConfiguration>();
+                    var baseUrl = cfg["Finnegans:BaseUrl"];
+                    if (!string.IsNullOrWhiteSpace(baseUrl))
+                        client.BaseAddress = new Uri(baseUrl);
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                });
+            }
+
+            // services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddExceptionHandler<GlobalExceptionHandler>();
             services.AddProblemDetails();

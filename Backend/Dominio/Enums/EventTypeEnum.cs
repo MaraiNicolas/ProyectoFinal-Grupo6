@@ -17,6 +17,9 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Enums
         INVITATION_EXPIRED,
 
         [Description("Invitación Cancelada")]
-        INVITATION_CANCELLED
+        INVITATION_CANCELLED,
+
+        [Description("Visitante Cancelado")]
+        VISITOR_CANCELLED
     }
 }

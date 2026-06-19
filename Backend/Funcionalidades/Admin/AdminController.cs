@@ -1,6 +1,7 @@
 using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProyectoFinal_Grupo6.Api.Dominio.Enums;
 using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
 using ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones;
 
@@ -112,6 +113,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
             {
                 a.Guid,
                 a.EventType,
+                EventTypeDescripcion = EventTypeEnumExtensions.ObtenerDescripcion(a.EventType),
                 a.Timestamp,
                 a.UsuarioEmail,
                 a.VisitanteEmail,

@@ -2,10 +2,15 @@
 
 # Esta fase se usa cuando se ejecuta desde VS en modo rápido (valor predeterminado para la configuración de depuración)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
+
+# Carpeta para la base SQLite. Se crea con permisos para el usuario "app" (UID
+# del runtime de ASP.NET) y se monta como volumen en docker-compose.yml para
+# persistir los datos entre restarts del contenedor.
+RUN mkdir -p /app/data && chown -R $APP_UID:$APP_UID /app/data
+USER $APP_UID
 
 
 # Esta fase se usa para compilar el proyecto de servicio

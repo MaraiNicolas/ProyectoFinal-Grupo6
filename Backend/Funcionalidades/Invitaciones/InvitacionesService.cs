@@ -52,8 +52,14 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             await _context.SaveChangesAsync();
 
             var usuario = await _context.Set<Usuario>().FindAsync(usuarioId);
-            await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId, invitacionId: invitacion.Guid,
-                usuarioEmail: usuario?.Email, invitacionTitulo: invitacion.Titulo);
+            foreach (var visitante in invitacion.Visitantes)
+            {
+                await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId,
+                    invitacionId: invitacion.Guid,
+                    usuarioEmail: usuario?.Email,
+                    visitanteEmail: visitante.EmailVisitante,
+                    invitacionTitulo: invitacion.Titulo);
+            }
 
             var destino = await _context.Set<Destino>().FindAsync(invitacion.DestinoId);
             var nombreAnfitrion = usuario != null ? $"{usuario.Nombre} {usuario.Apellido}" : "Anfitrion";
@@ -91,7 +97,11 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             if (fecha.HasValue)
                 query = query.Where(i => i.Fecha.Date == fecha.Value.Date);
 
-            return await query.OrderByDescending(i => i.Fecha).ThenByDescending(i => i.HoraInicio).ToListAsync();
+            var invitaciones = await query.OrderByDescending(i => i.Fecha).ToListAsync();
+            return invitaciones
+                .OrderByDescending(i => i.Fecha)
+                .ThenByDescending(i => i.HoraInicio)
+                .ToList();
         }
 
         public async Task<Invitacion?> ObtenerInvitacionPorId(Guid id)
@@ -159,6 +169,12 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
                 foreach (var iv in agregados)
                 {
+                    await _auditLog.RegistrarEvento(EventTypeEnum.INVITATION_CREATED.ToString(), usuarioId,
+                        invitacionId: invitacion.Guid,
+                        usuarioEmail: usuario?.Email,
+                        visitanteEmail: iv.EmailVisitante,
+                        invitacionTitulo: invitacion.Titulo);
+
                     await _emailService.EnviarLinkRegistro(new EmailRegistroRequest
                     {
                         DestinatarioEmail = iv.EmailVisitante,

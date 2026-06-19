@@ -491,10 +491,17 @@ function AdminAuditLogs() {
     obtenerAuditLogs().then((data) => { setLogs(data || []); setLoading(false) })
   }, [])
 
-  const eventTypes = useMemo(() =>
-    [...new Set(logs.map(l => l.eventType).filter(Boolean))].sort(),
-    [logs]
-  )
+  const eventTypes = useMemo(() => {
+    const map = new Map()
+    logs.forEach(l => {
+      if (l.eventType && !map.has(l.eventType)) {
+        map.set(l.eventType, l.eventTypeDescripcion || l.eventType)
+      }
+    })
+    return [...map.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [logs])
 
   const filtered = useMemo(() => {
     let result = logs
@@ -505,7 +512,8 @@ function AdminAuditLogs() {
         (l.usuarioEmail || '').toLowerCase().includes(s) ||
         (l.visitanteEmail || '').toLowerCase().includes(s) ||
         (l.invitacionTitulo || '').toLowerCase().includes(s) ||
-        (l.eventType || '').toLowerCase().includes(s)
+        (l.eventType || '').toLowerCase().includes(s) ||
+        (l.eventTypeDescripcion || '').toLowerCase().includes(s)
       )
     }
 
@@ -525,7 +533,7 @@ function AdminAuditLogs() {
 
     return sortFn(result, (l, field) => {
       switch (field) {
-        case 'eventType': return l.eventType
+        case 'eventType': return l.eventTypeDescripcion || l.eventType
         case 'timestamp': return new Date(l.timestamp).getTime()
         case 'usuarioEmail': return l.usuarioEmail || ''
         case 'visitanteEmail': return l.visitanteEmail || ''
@@ -536,7 +544,10 @@ function AdminAuditLogs() {
   }, [logs, search, eventType, desde, hasta, sortField, sortDir, sortFn])
 
   const activeFilters = {}
-  if (eventType) activeFilters['Evento'] = eventType
+  if (eventType) {
+    const found = eventTypes.find(et => et.value === eventType)
+    activeFilters['Evento'] = found?.label || eventType
+  }
   if (desde) activeFilters['Desde'] = desde
   if (hasta) activeFilters['Hasta'] = hasta
 
@@ -563,7 +574,7 @@ function AdminAuditLogs() {
         <select className="filter-select" value={eventType} onChange={(e) => setEventType(e.target.value)}>
           <option value="">Todos los eventos</option>
           {eventTypes.map(et => (
-            <option key={et} value={et}>{et}</option>
+            <option key={et.value} value={et.value}>{et.label}</option>
           ))}
         </select>
       </div>
@@ -584,7 +595,7 @@ function AdminAuditLogs() {
           <tbody>
             {filtered.map((log) => (
               <tr key={log.guid}>
-                <td><strong>{log.eventType}</strong></td>
+                <td><strong>{log.eventTypeDescripcion || log.eventType}</strong></td>
                 <td style={{ whiteSpace: 'nowrap' }}>{new Date(log.timestamp).toLocaleString('es-AR')}</td>
                 <td>{log.usuarioEmail || '-'}</td>
                 <td>{log.visitanteEmail || '-'}</td>

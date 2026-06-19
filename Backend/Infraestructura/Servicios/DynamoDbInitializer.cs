@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 
@@ -9,11 +5,11 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 {
     public static class DynamoDbInitializer
     {
-        public static async Task EnsureAuditLogsTableAsync(IAmazonDynamoDB client)
+        public static async Task EnsureAuditLogsTableAsync(IAmazonDynamoDB client, CancellationToken cancellationToken = default)
         {
             const string tableName = "AuditLogs";
 
-            var existingTables = await client.ListTablesAsync();
+            var existingTables = await client.ListTablesAsync(cancellationToken);
             if (existingTables.TableNames.Contains(tableName))
                 return;
 
@@ -47,20 +43,21 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
                 ProvisionedThroughput = new ProvisionedThroughput(5, 5)
             };
 
-            await client.CreateTableAsync(request);
+            await client.CreateTableAsync(request, cancellationToken);
 
             // Esperar hasta que la tabla esté activa (opcional en Local)
-            await WaitForTableActiveAsync(client, tableName);
+            await WaitForTableActiveAsync(client, tableName, cancellationToken);
         }
 
-        private static async Task WaitForTableActiveAsync(IAmazonDynamoDB client, string tableName)
+        private static async Task WaitForTableActiveAsync(IAmazonDynamoDB client, string tableName, CancellationToken cancellationToken)
         {
             for (int i = 0; i < 10; i++)
             {
-                var resp = await client.DescribeTableAsync(new DescribeTableRequest { TableName = tableName });
+                cancellationToken.ThrowIfCancellationRequested();
+                var resp = await client.DescribeTableAsync(new DescribeTableRequest { TableName = tableName }, cancellationToken);
                 if (resp.Table.TableStatus == TableStatus.ACTIVE)
                     return;
-                await Task.Delay(500);
+                await Task.Delay(500, cancellationToken);
             }
         }
     }

@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios;
+using ProyectoFinal_Grupo6.Api.Dominio.Modelos;
+using ProyectoFinal_Grupo6.Api.Infraestructura.Auth;
+using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 
 namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Auth
 {
@@ -14,41 +16,65 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Auth
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
 
-        // Usuarios y passwords hardcodeados para MVP
-        private static readonly Dictionary<string, string> Credenciales = new()
-        {
-            { "admin@empresa.com", "admin123" },
-            { "empleado1@empresa.com", "emp123" },
-            { "empleado2@empresa.com", "emp123" }
-        };
-
-        public AuthController(ApplicationDbContext context, IConfiguration configuration)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration, IMemoryCache cache)
         {
             _context = context;
             _configuration = configuration;
+            _cache = cache;
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        // SSO con Finnegans: el cliente redirige a nuestra app con ?access_token=xxx.
+        // Validamos ese token contra su API. Si es valido, devolvemos los datos del
+        // usuario (sin emitir JWT propio: el frontend usa el mismo access_token de
+        // Finnegans para todas las requests siguientes).
+        //
+        // Prepoblamos IMemoryCache para que la primera request del usuario despues
+        // del SSO no vuelva a golpear a Finnegans (el handler vera cache hit).
+        //
+        // Configuracion en appsettings.json -> "Finnegans" o variables de entorno
+        // (Finnegans__Enabled, Finnegans__BaseUrl, Finnegans__AutoCreateUsuarios,
+        //  Finnegans__CacheTtlMinutes, Finnegans__UseMock).
+        [HttpGet("sso")]
+        public async Task<IActionResult> SsoLogin(
+            [FromQuery(Name = "access_token")] string? accessToken,
+            [FromServices] IFinnegansAuthService finnegansAuth,
+            CancellationToken cancellationToken)
         {
-            // Verificar credenciales
-            if (!Credenciales.TryGetValue(request.Email, out var passwordEsperado) || request.Password != passwordEsperado)
-                return Unauthorized(new { mensaje = "Email o password incorrectos" });
+            var enabled = _configuration.GetValue<bool>("Finnegans:Enabled", false);
+            if (!enabled)
+                return NotFound(new { mensaje = "SSO con Finnegans no esta habilitado" });
 
-            // Buscar usuario en la base de datos
-            var usuario = await _context.Set<Dominio.Entidades.Usuario>()
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (string.IsNullOrWhiteSpace(accessToken))
+                return BadRequest(new { mensaje = "Falta el parametro access_token" });
 
+            var info = await finnegansAuth.ValidarTokenAsync(accessToken, cancellationToken);
+            if (info == null || string.IsNullOrWhiteSpace(info.Email))
+                return Unauthorized(new { mensaje = "Token invalido o no se pudo validar con Finnegans" });
+
+            var usuario = await ResolverOCrearUsuarioAsync(info, cancellationToken);
             if (usuario == null)
-                return Unauthorized(new { mensaje = "Usuario no encontrado" });
+                return Unauthorized(new { mensaje = $"El usuario {info.Email} no esta registrado en el sistema" });
 
-            // Generar JWT
-            var token = GenerarToken(usuario);
+            // Prepoblar el cache para evitar un round-trip extra a Finnegans en la
+            // primera request autenticada del usuario.
+            var ttlMinutes = _configuration.GetValue<int>("Finnegans:CacheTtlMinutes", 5);
+            var cacheKey = FinnegansAuthDefaults.CacheKeyPrefix + Sha256Hex(accessToken);
+            _cache.Set(cacheKey, new CachedFinnegansPrincipal
+            {
+                Guid = usuario.Guid,
+                Email = usuario.Email,
+                Rol = usuario.Rol,
+                Admin = info.Admin
+            }, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(ttlMinutes),
+                Size = 1
+            });
 
             return Ok(new
             {
-                token,
                 usuario = new
                 {
                     guid = usuario.Guid,
@@ -60,34 +86,54 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Auth
             });
         }
 
-        private string GenerarToken(Dominio.Entidades.Usuario usuario)
+        // Invalida la entrada del cache para el token recibido. El frontend debe
+        // limpiar localStorage; este endpoint solo evita que el token siga siendo
+        // aceptado hasta que expire el TTL.
+        [HttpPost("logout")]
+        public IActionResult Logout([FromQuery(Name = "access_token")] string? accessToken)
         {
-            var jwtKey = _configuration["Jwt:Key"]!;
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            if (string.IsNullOrWhiteSpace(accessToken))
+                return NoContent();
 
-            var claims = new[]
+            var cacheKey = FinnegansAuthDefaults.CacheKeyPrefix + Sha256Hex(accessToken);
+            _cache.Remove(cacheKey);
+            return NoContent();
+        }
+
+        // Auto-create solo aplica en este endpoint. Si Finnegans:AutoCreateUsuarios=false
+        // y el usuario no existe, retorna null y el caller responde 401.
+        private async Task<Dominio.Entidades.Usuario?> ResolverOCrearUsuarioAsync(
+            FinnegansUserInfo info,
+            CancellationToken cancellationToken)
+        {
+            var usuario = await _context.Set<Dominio.Entidades.Usuario>()
+                .FirstOrDefaultAsync(u => u.Email == info.Email, cancellationToken);
+
+            if (usuario != null)
+                return usuario;
+
+            var autoCrear = _configuration.GetValue<bool>("Finnegans:AutoCreateUsuarios", false);
+            if (!autoCrear)
+                return null;
+
+            var rolPorDefecto = _configuration["Finnegans:RolPorDefecto"] ?? "Empleado";
+            usuario = new Dominio.Entidades.Usuario
             {
-                new Claim(ClaimTypes.NameIdentifier, usuario.Guid.ToString()),
-                new Claim(ClaimTypes.Email, usuario.Email),
-                new Claim(ClaimTypes.Role, usuario.Rol)
+                Nombre = info.Email.Split('@')[0],
+                Apellido = string.Empty,
+                Email = info.Email,
+                Rol = info.Admin ? "Admin" : rolPorDefecto
             };
+            _context.Set<Dominio.Entidades.Usuario>().Add(usuario);
+            await _context.SaveChangesAsync(cancellationToken);
+            return usuario;
+        }
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(8),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+        private static string Sha256Hex(string input)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+            return Convert.ToHexString(bytes);
         }
     }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-    }
 }
+

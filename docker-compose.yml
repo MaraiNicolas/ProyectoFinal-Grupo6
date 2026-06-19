@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   # Bloque de Api
   proyectofinal-grupo6.api:
@@ -9,13 +7,74 @@ services:
       dockerfile: Backend/Dockerfile
     ports:
       - "8080:8080" # Port default: http://localhost:8080
-  #Bloque de React-Frontend
+    environment:
+      # --- ASP.NET Core ---
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+      # --- Base de datos (SQLite por defecto) ---
+      # El archivo se persiste en el volumen Docker "sqlite-data" montado en /app/data.
+      # Para migrar a otro motor (PostgreSQL, SQL Server), cambiar el connection string
+      # y reemplazar UseSqlite por UseNpgsql/UseSqlServer en DependencyInjection.cs.
+      ConnectionStrings__DefaultConnection: "${DB_CONNECTION_STRING:-Data Source=/app/data/grupo6.db}"
+
+      # --- SSO Finnegans ---
+      # Cambiar Finnegans__Enabled a "true" para habilitar el SSO.
+      # Ver Backend/Documents/SSO-Finnegans-Deployment.md para detalles.
+      Finnegans__Enabled: "${FINNEGANS_ENABLED:-false}"
+      Finnegans__UseMock: "${FINNEGANS_USE_MOCK:-false}"
+      Finnegans__BaseUrl: "${BASE_GO_URL}"
+      Finnegans__InvitadosEndpoint: "${FINNEGANS_INVITADOS_ENDPOINT:-/api/1/invitados}"
+      Finnegans__AutoCreateUsuarios: "${FINNEGANS_AUTO_CREATE:-false}"
+      Finnegans__RolPorDefecto: "${FINNEGANS_ROL_DEFAULT:-Admin}"
+      Finnegans__CacheTtlMinutes: "${FINNEGANS_CACHE_TTL_MINUTES:-5}"
+
+      # --- Servicios externos (mock por defecto en contenedor) ---
+      HikCentral__UseMock: "${HIKCENTRAL_USE_MOCK:-true}"
+      AuditLog__UseMock: "${AUDIT_USE_MOCK:-true}"
+      Email__UseMock: "${EMAIL_USE_MOCK:-true}"
+
+      # --- DynamoDB (auditoria) ---
+      # Apunta al servicio dynamodb-local del compose. Ignorado si AuditLog__UseMock=true.
+      DynamoDB__ServiceUrl: "${DYNAMODB_SERVICE_URL:-http://dynamodb-local:8000}"
+    volumes:
+      # Persiste el archivo SQLite (datos transaccionales) entre restarts del contenedor.
+      - sqlite-data:/app/data
+    depends_on:
+      - dynamodb-local
+
+  # Bloque de React-Frontend
   frontend:
     image: react-frontend
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        # Vite inlinea las VITE_* en build-time, por eso van como build arg.
+        # En produccion debe apuntar al dominio publico del backend.
+        VITE_API_URL: "${VITE_API_URL:-http://localhost:8080/api}"
+        VITE_SHOW_MOCK_SSO: "${VITE_SHOW_MOCK_SSO:-false}"
     ports:
       - "3000:80"  # Port default: http://localhost:3000
     depends_on:
-      - proyectofinal-grupo6.api  
+      - proyectofinal-grupo6.api
+
+  # Bloque de DynamoDB Local (auditoria)
+  # Se usa solo si AuditLog__UseMock=false. En produccion con AWS DynamoDB real,
+  # cambiar DynamoDB__ServiceUrl al endpoint regional y quitar este servicio.
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    user: root
+    working_dir: /home/dynamodblocal
+    ports:
+      - "${DYNAMODB_PORT:-8000}:8000"   # Expuesto para inspeccionar desde el host (opcional)
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+
+volumes:
+  # Persiste los datos transaccionales (usuarios, invitaciones, visitantes, etc.).
+  sqlite-data:
+  # Persiste los AuditLogs entre restarts del contenedor dynamodb-local.
+  dynamodb-data:

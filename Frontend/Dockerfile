@@ -1,0 +1,29 @@
+# Etapa 1: Compilar la app de React con Node
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# URL del backend que Vite inlinea en el bundle durante el build.
+# Se sobrescribe desde docker-compose.yml via build args.
+ARG VITE_API_URL=http://localhost:8080/api
+ENV VITE_API_URL=$VITE_API_URL
+
+# Si "true", la pagina /login muestra los tokens mock como botones para
+# facilitar el testing manual del SSO en desarrollo. Default: false (produccion).
+ARG VITE_SHOW_MOCK_SSO=false
+ENV VITE_SHOW_MOCK_SSO=$VITE_SHOW_MOCK_SSO
+
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Etapa 2: Servidor web ligero (Nginx) para entregar los archivos estáticos
+FROM nginx:alpine AS final
+# Config con SPA fallback (try_files ... /index.html) para que las rutas
+# client-side de React Router (/auth/sso, /invitaciones, /login, etc.)
+# no devuelvan 404 al recargar o entrar por URL directa.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copiamos la carpeta 'dist' que generó Vite al directorio de Nginx
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

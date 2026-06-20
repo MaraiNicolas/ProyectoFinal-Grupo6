@@ -130,9 +130,12 @@ export function completarRegistro(token, data) {
 }
 
 // --- Visitantes ---
-export function obtenerVisitantes(search) {
-  const params = search ? `?search=${encodeURIComponent(search)}` : "";
-  return request(`/visitantes${params}`);
+export function obtenerVisitantes(search, pagina = 1, tamano = 20) {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  params.set("pagina", pagina);
+  params.set("tamano", tamano);
+  return request(`/visitantes?${params.toString()}`);
 }
 
 // --- Destinos ---

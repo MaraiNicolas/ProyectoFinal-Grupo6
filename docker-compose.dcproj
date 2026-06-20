@@ -19,5 +19,7 @@
     <None Include="docs\SSO-Finnegans-Deployment.md" />
     <None Include="docs\SSO-Finnegans-Paso-a-Paso.md" />
     <None Include="Frontend\.dockerignore" />
+    <None Include="Frontend\src\components\Paginacion.css" />
+    <None Include="Frontend\src\components\Paginacion.jsx" />
   </ItemGroup>
 </Project>

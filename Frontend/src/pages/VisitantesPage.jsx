@@ -2,12 +2,15 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { obtenerVisitantes, obtenerInvitaciones, agregarVisitantes } from '../services/api'
 import { Button } from '../components/Button'
+import { Paginacion } from '../components/Paginacion'
 
 export function VisitantesPage() {
   const navigate = useNavigate()
   const [visitantes, setVisitantes] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [pagina, setPagina] = useState(1)
+  const [paginacion, setPaginacion] = useState({ total: 0, totalPaginas: 1, tamano: 20 })
 
   const [menuOpen, setMenuOpen] = useState(null)
   const [pickingFor, setPickingFor] = useState(null)
@@ -18,15 +21,20 @@ export function VisitantesPage() {
   const menuRef = useRef(null)
 
   useEffect(() => {
+    setPagina(1)
+  }, [search])
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(true)
-      obtenerVisitantes(search || undefined).then((data) => {
-        setVisitantes(data || [])
+      obtenerVisitantes(search || undefined, pagina, paginacion.tamano).then((data) => {
+        setVisitantes(data?.items || [])
+        setPaginacion({ total: data?.total ?? 0, totalPaginas: data?.totalPaginas ?? 1, tamano: data?.tamano ?? 20 })
         setLoading(false)
       })
     }, 300)
     return () => clearTimeout(timer)
-  }, [search])
+  }, [search, pagina])
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -98,6 +106,8 @@ export function VisitantesPage() {
         ) : visitantes.length === 0 ? (
           <p className="empty-state">No se encontraron visitantes.</p>
         ) : (
+          <>
+          <div className="table-scroll">
           <table className="visitors-table">
             <thead>
               <tr>
@@ -148,6 +158,15 @@ export function VisitantesPage() {
               ))}
             </tbody>
           </table>
+          </div>
+          <Paginacion
+            pagina={pagina}
+            totalPaginas={paginacion.totalPaginas}
+            total={paginacion.total}
+            tamano={paginacion.tamano}
+            onCambiarPagina={setPagina}
+          />
+          </>
         )}
       </section>
 

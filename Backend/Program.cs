@@ -78,6 +78,9 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     if (context.Database.IsRelational())
     {
+        var databasePath = "/app/data";
+        Directory.CreateDirectory(databasePath);
+
         context.Database.EnsureCreated();
     }
     // Datos iniciales (admin, destinos, etc.). Idempotente: solo seed si la DB

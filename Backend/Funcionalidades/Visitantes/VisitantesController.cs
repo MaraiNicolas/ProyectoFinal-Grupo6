@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProyectoFinal_Grupo6.Api.Compartidos.Paginacion;
 
 namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
 {
@@ -16,20 +17,27 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
         }
 
         [HttpGet]
-        public async Task<IActionResult> Listar([FromQuery] string? search)
+        public async Task<IActionResult> Listar([FromQuery] string? search, [FromQuery] PaginacionParams paginacion)
         {
-            var visitantes = await _service.ObtenerVisitantes(search);
+            var resultado = await _service.ObtenerVisitantes(search, paginacion);
 
-            return Ok(visitantes.Select(v => new
+            return Ok(new
             {
-                v.Guid,
-                v.Nombre,
-                v.Apellido,
-                v.Email,
-                v.Telefono,
-                v.TipoDocumento,
-                v.NumeroDocumento
-            }));
+                resultado.Total,
+                resultado.Pagina,
+                resultado.Tamano,
+                resultado.TotalPaginas,
+                items = resultado.Items.Select(v => new
+                {
+                    v.Guid,
+                    v.Nombre,
+                    v.Apellido,
+                    v.Email,
+                    v.Telefono,
+                    v.TipoDocumento,
+                    v.NumeroDocumento
+                })
+            });
         }
     }
 }

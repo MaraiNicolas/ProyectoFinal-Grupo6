@@ -347,6 +347,14 @@
 .visitors-view .table-panel {
   flex: 1;
   min-height: 0;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.visitors-view .table-scroll {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 

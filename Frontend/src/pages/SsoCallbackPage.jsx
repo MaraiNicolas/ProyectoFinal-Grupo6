@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import * as api from '../services/api'
 
@@ -11,10 +11,14 @@ export function SsoCallbackPage({ auth }) {
   const navigate = useNavigate()
   const [error, setError] = useState('')
 
+  // Ref para evitar que auth (que cambia tras refresh()) este en las deps del
+  // efecto principal y lo dispare una segunda vez antes de navegar.
+  const refreshRef = useRef(auth?.refresh)
+  useEffect(() => { refreshRef.current = auth?.refresh })
+
   useEffect(() => {
     const accessToken = searchParams.get('access_token')
     if (!accessToken) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError('Falta access_token en la URL. Ingresa desde Finnegans GO.')
       return
     }
@@ -22,14 +26,14 @@ export function SsoCallbackPage({ auth }) {
     api.ssoLogin(accessToken)
       .then((data) => {
         if (data?.usuario) {
-          auth?.refresh?.()
+          refreshRef.current?.()
           navigate('/', { replace: true })
         } else {
           setError(data?.mensaje || 'No se pudo iniciar sesion con Finnegans')
         }
       })
       .catch(() => setError('Error al validar el token con Finnegans'))
-  }, [searchParams, navigate, auth])
+  }, [searchParams, navigate])
 
   return (
     <main className="login-shell">

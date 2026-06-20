@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProyectoFinal_Grupo6.Api.Compartidos.Paginacion;
 using ProyectoFinal_Grupo6.Api.Dominio.Entidades;
 using ProyectoFinal_Grupo6.Api.Infraestructura.Database;
 
@@ -13,7 +14,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
             _context = context;
         }
 
-        public async Task<List<Visitante>> ObtenerVisitantes(string? search)
+        public async Task<PagedResult<Visitante>> ObtenerVisitantes(string? search, PaginacionParams paginacion)
         {
             var query = _context.Set<Visitante>().AsQueryable();
 
@@ -27,7 +28,10 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
                     v.NumeroDocumento.Contains(term));
             }
 
-            return await query.OrderBy(v => v.Apellido).ThenBy(v => v.Nombre).ToListAsync();
+            return await query
+                .OrderBy(v => v.Apellido)
+                .ThenBy(v => v.Nombre)
+                .ToPagedResultAsync(paginacion);
         }
     }
 }

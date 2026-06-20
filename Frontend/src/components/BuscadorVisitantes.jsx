@@ -29,8 +29,8 @@ export function BuscadorVisitantes({ onSelect, excludeEmails = [] }) {
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       setBuscando(true)
-      obtenerVisitantes(value).then((data) => {
-        setResultados(data || [])
+      obtenerVisitantes(value, 1, 50).then((data) => {
+        setResultados(data?.items || [])
         setBuscando(false)
       })
     }, 300)

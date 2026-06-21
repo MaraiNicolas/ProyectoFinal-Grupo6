@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { obtenerVisitantes, obtenerInvitaciones, agregarVisitantes } from '../services/api'
+import { obtenerVisitantes, obtenerInvitaciones, agregarVisitantes, eliminarVisitante } from '../services/api'
 import { Button } from '../components/Button'
 
 export function VisitantesPage() {
@@ -15,6 +15,7 @@ export function VisitantesPage() {
   const [loadingInvitaciones, setLoadingInvitaciones] = useState(false)
   const [addSuccess, setAddSuccess] = useState(null)
   const [addError, setAddError] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
   const menuRef = useRef(null)
 
   useEffect(() => {
@@ -50,6 +51,13 @@ export function VisitantesPage() {
       setInvitaciones(activas)
       setLoadingInvitaciones(false)
     })
+  }
+
+  const handleDeleteVisitante = async () => {
+    if (!deleteConfirm) return
+    await eliminarVisitante(deleteConfirm.guid)
+    setDeleteConfirm(null)
+    setVisitantes((current) => current.filter((v) => v.guid !== deleteConfirm.guid))
   }
 
   const handleAddToInvitacion = async (invitacionId) => {
@@ -118,13 +126,20 @@ export function VisitantesPage() {
                   <td>{v.telefono || '-'}</td>
                   <td>{v.tipoDocumento} {v.numeroDocumento}</td>
                   <td>
-                    <div style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => setMenuOpen(menuOpen === v.guid ? null : v.guid)}
                       >
                         Re-invitar
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setDeleteConfirm(v)}
+                      >
+                        Eliminar
                       </Button>
                       {menuOpen === v.guid && (
                         <div className="reinvite-menu" ref={menuRef}>
@@ -150,6 +165,19 @@ export function VisitantesPage() {
           </table>
         )}
       </section>
+
+      {deleteConfirm && (
+        <div className="confirm-overlay" onClick={() => setDeleteConfirm(null)}>
+          <section className="confirm-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h2>Eliminar visitante</h2>
+            <p>Estas seguro que deseas eliminar a <strong>{deleteConfirm.nombre} {deleteConfirm.apellido}</strong> ({deleteConfirm.email})?</p>
+            <div className="confirm-actions">
+              <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>No</Button>
+              <Button variant="danger" onClick={handleDeleteVisitante}>Si, eliminar</Button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {pickingFor && (
         <div className="confirm-overlay" onClick={() => setPickingFor(null)}>

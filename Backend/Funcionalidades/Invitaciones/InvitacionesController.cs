@@ -146,6 +146,16 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return Ok(new { iv.Guid, iv.EstadoFormulario });
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Eliminar(Guid id)
+        {
+            var eliminado = await _service.EliminarInvitacion(id);
+            if (!eliminado)
+                return NotFound(new { mensaje = "Invitacion no encontrada" });
+
+            return NoContent();
+        }
+
         private Guid ObtenerUsuarioId()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier);

@@ -29,5 +29,15 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
 
             return await query.OrderBy(v => v.Apellido).ThenBy(v => v.Nombre).ToListAsync();
         }
+
+        public async Task<bool> EliminarVisitante(Guid id)
+        {
+            var visitante = await _context.Set<Visitante>().FindAsync(id);
+            if (visitante == null) return false;
+
+            _context.Set<Visitante>().Remove(visitante);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

@@ -81,7 +81,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 
         public async Task<HikCancelacionResponse> CancelarReserva(string appointRecordId, HikReservaRequest requestOriginal)
         {
-            var pastDate = DateTime.UtcNow.AddHours(-24).Date;
+            var pastDate = DateTime.UtcNow.AddDays(-2).Date;
             var updateBody = new
             {
                 AppointRecordId = appointRecordId,

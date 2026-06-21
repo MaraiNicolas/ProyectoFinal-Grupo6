@@ -271,6 +271,20 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
             return iv;
         }
+
+        public async Task<bool> EliminarInvitacion(Guid id)
+        {
+            var invitacion = await _context.Set<Invitacion>()
+                .Include(i => i.Visitantes)
+                .FirstOrDefaultAsync(i => i.Guid == id);
+
+            if (invitacion == null) return false;
+
+            _context.Set<InvitacionVisitante>().RemoveRange(invitacion.Visitantes);
+            _context.Set<Invitacion>().Remove(invitacion);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 
     // DTOs de request

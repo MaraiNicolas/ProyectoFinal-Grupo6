@@ -103,6 +103,10 @@ export function cancelarInvitacion(id) {
   return request(`/invitaciones/${id}/cancelar`, { method: "PUT" });
 }
 
+export function eliminarInvitacion(id) {
+  return request(`/invitaciones/${id}`, { method: "DELETE" });
+}
+
 export function cancelarVisitante(invitacionId, visitanteId) {
   return request(
     `/invitaciones/${invitacionId}/visitantes/${visitanteId}/cancelar`,
@@ -133,6 +137,10 @@ export function completarRegistro(token, data) {
 export function obtenerVisitantes(search) {
   const params = search ? `?search=${encodeURIComponent(search)}` : "";
   return request(`/visitantes${params}`);
+}
+
+export function eliminarVisitante(id) {
+  return request(`/visitantes/${id}`, { method: "DELETE" });
 }
 
 // --- Destinos ---

@@ -120,6 +120,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         {
             var invitacion = await _context.Set<Invitacion>()
                 .Include(i => i.Visitantes)
+                    .ThenInclude(v => v.Visitante)
                 .FirstOrDefaultAsync(i => i.Guid == id);
 
             if (invitacion == null)
@@ -129,28 +130,32 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             var horaFin = $"{invitacion.HoraFin.Hours:D2}:{invitacion.HoraFin.Minutes:D2}";
             var cancelPurpose = $"{invitacion.Titulo} - {invitacion.Fecha:dd-MM-yyyy} {horaInicio} a {horaFin}";
 
-            foreach (var iv in invitacion.Visitantes.Where(v => v.HikCentralReservationId != null))
+            foreach (var iv in invitacion.Visitantes)
             {
-                var hikRequest = new HikReservaRequest
+                if (iv.HikCentralReservationId != null)
                 {
-                    VisitPurpose = cancelPurpose,
-                    VisitorInfoList = new List<HikVisitorInfo>
+                    var hikRequest = new HikReservaRequest
                     {
-                        new HikVisitorInfo
+                        VisitPurpose = cancelPurpose,
+                        VisitorInfoList = new List<HikVisitorInfo>
                         {
-                            VisitorInfo = new HikVisitante
+                            new HikVisitorInfo
                             {
-                                VisitorGivenName = iv.Visitante?.Nombre ?? "",
-                                VisitorFamilyName = iv.Visitante?.Apellido ?? "",
-                                Email = iv.EmailVisitante,
-                                Remark = "Cancelado por el sistema"
+                                VisitorInfo = new HikVisitante
+                                {
+                                    VisitorGivenName = iv.Visitante?.Nombre ?? "",
+                                    VisitorFamilyName = iv.Visitante?.Apellido ?? "",
+                                    Email = iv.EmailVisitante,
+                                    Remark = "Evento cancelado"
+                                }
                             }
                         }
-                    }
-                };
-                var cancelResult = await _hikCentral.CancelarReserva(iv.HikCentralReservationId!, hikRequest);
-                if (cancelResult.Success && cancelResult.NewReservationId != null)
-                    iv.HikCentralReservationId = cancelResult.NewReservationId;
+                    };
+                    var cancelResult = await _hikCentral.CancelarReserva(iv.HikCentralReservationId!, hikRequest);
+                    if (cancelResult.Success && cancelResult.NewReservationId != null)
+                        iv.HikCentralReservationId = cancelResult.NewReservationId;
+                }
+                iv.EstadoFormulario = "Cancelado";
             }
 
             invitacion.Estado = "Cancelada";
@@ -251,7 +256,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                                 VisitorGivenName = iv.Visitante?.Nombre ?? "",
                                 VisitorFamilyName = iv.Visitante?.Apellido ?? "",
                                 Email = iv.EmailVisitante,
-                                Remark = "Cancelado por el sistema"
+                                Remark = "Invitacion cancelada"
                             }
                         }
                     }
@@ -276,9 +281,36 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         {
             var invitacion = await _context.Set<Invitacion>()
                 .Include(i => i.Visitantes)
+                    .ThenInclude(v => v.Visitante)
                 .FirstOrDefaultAsync(i => i.Guid == id);
 
             if (invitacion == null) return false;
+
+            var horaInicio = $"{invitacion.HoraInicio.Hours:D2}:{invitacion.HoraInicio.Minutes:D2}";
+            var horaFin = $"{invitacion.HoraFin.Hours:D2}:{invitacion.HoraFin.Minutes:D2}";
+            var cancelPurpose = $"{invitacion.Titulo} - {invitacion.Fecha:dd-MM-yyyy} {horaInicio} a {horaFin}";
+
+            foreach (var iv in invitacion.Visitantes.Where(v => v.HikCentralReservationId != null))
+            {
+                var hikRequest = new HikReservaRequest
+                {
+                    VisitPurpose = cancelPurpose,
+                    VisitorInfoList = new List<HikVisitorInfo>
+                    {
+                        new HikVisitorInfo
+                        {
+                            VisitorInfo = new HikVisitante
+                            {
+                                VisitorGivenName = iv.Visitante?.Nombre ?? "",
+                                VisitorFamilyName = iv.Visitante?.Apellido ?? "",
+                                Email = iv.EmailVisitante,
+                                Remark = "Evento cancelado"
+                            }
+                        }
+                    }
+                };
+                await _hikCentral.CancelarReserva(iv.HikCentralReservationId!, hikRequest);
+            }
 
             _context.Set<InvitacionVisitante>().RemoveRange(invitacion.Visitantes);
             _context.Set<Invitacion>().Remove(invitacion);

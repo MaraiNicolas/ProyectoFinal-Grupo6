@@ -158,7 +158,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
             // Actualizar InvitacionVisitante
             iv.VisitanteId = visitante.Guid;
             iv.EstadoFormulario = "Completado";
-            iv.FechaCompletado = DateTime.UtcNow;
+            iv.FechaCompletado = DateTime.Now;
             iv.HikCentralReservationId = hikResponse.ReservationId;
             iv.QrCodeImage = hikResponse.QrCodeImage;
 

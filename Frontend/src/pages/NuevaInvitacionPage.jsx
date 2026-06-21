@@ -38,6 +38,8 @@ export function NuevaInvitacionPage() {
   const [originalGrupoEmails, setOriginalGrupoEmails] = useState([])
   const [showGroupPrompt, setShowGroupPrompt] = useState(false)
   const [showGroupUpdate, setShowGroupUpdate] = useState(false)
+  const [showGroupModal, setShowGroupModal] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [newGroupDesc, setNewGroupDesc] = useState('')
 
@@ -152,6 +154,26 @@ export function NuevaInvitacionPage() {
     handleNext()
   }
 
+  const doSubmit = async () => {
+    setSubmitting(true)
+    setShowGroupModal(false)
+    setError('')
+
+    const visitantesValidos = visitantes.filter((v) => v.email.trim())
+    try {
+      const data = await crearInvitacion({
+        ...form,
+        horaInicio: form.horaInicio + ':00',
+        horaFin: form.horaFin + ':00',
+        visitantes: visitantesValidos,
+      })
+      setCreada(data)
+    } catch {
+      setError('Error al crear la invitacion.')
+    }
+    setSubmitting(false)
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
@@ -167,17 +189,15 @@ export function NuevaInvitacionPage() {
       return
     }
 
-    try {
-      const data = await crearInvitacion({
-        ...form,
-        horaInicio: form.horaInicio + ':00',
-        horaFin: form.horaFin + ':00',
-        visitantes: visitantesValidos,
-      })
-      setCreada(data)
-    } catch {
-      setError('Error al crear la invitacion.')
+    const membersChanged = selectedGrupoId && JSON.stringify(visitantesValidos.map((v) => v.email.toLowerCase()).sort()) !== JSON.stringify(originalGrupoEmails)
+    const canCreateGroup = !selectedGrupoId && visitantesValidos.length >= 2
+
+    if (canCreateGroup || membersChanged) {
+      setShowGroupModal(true)
+      return
     }
+
+    doSubmit()
   }
 
   if (creada) {
@@ -213,65 +233,17 @@ export function NuevaInvitacionPage() {
           </Button>
         </div>
 
-        {(() => {
-          const validEmails = creada.visitantes?.map((v) => v.emailVisitante.toLowerCase()).sort() || []
-          const membersChanged = selectedGrupoId && JSON.stringify(validEmails) !== JSON.stringify(originalGrupoEmails)
-          const canCreateGroup = !selectedGrupoId && validEmails.length >= 2
+      </section>
+    )
+  }
 
-          return (
-            <>
-              {canCreateGroup && !showGroupPrompt && (
-                <section className="table-panel" style={{ marginTop: 20, textAlign: 'center' }}>
-                  <p style={{ marginBottom: 12 }}>Deseas guardar estos visitantes como un grupo?</p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 16 }}>Los grupos permiten crear invitaciones para las mismas personas facilmente en el futuro.</p>
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                    <Button variant="secondary" size="sm" onClick={() => setShowGroupPrompt(false)}>No</Button>
-                    <Button variant="primary" size="sm" onClick={() => setShowGroupPrompt(true)}>Si, crear grupo</Button>
-                  </div>
-                </section>
-              )}
-
-              {showGroupPrompt && (
-                <section className="table-panel" style={{ marginTop: 20 }}>
-                  <label className="field">
-                    <span>Nombre del grupo</span>
-                    <input type="text" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="Ej: Equipo de Marketing" />
-                  </label>
-                  <label className="field" style={{ marginTop: 8 }}>
-                    <span>Descripcion (opcional)</span>
-                    <input type="text" value={newGroupDesc} onChange={(e) => setNewGroupDesc(e.target.value)} placeholder="Ej: Reunion mensual" />
-                  </label>
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-                    <Button variant="secondary" size="sm" onClick={() => setShowGroupPrompt(false)}>Cancelar</Button>
-                    <Button variant="primary" size="sm" onClick={async () => {
-                      if (!newGroupName.trim()) return
-                      await crearGrupo({ nombre: newGroupName, descripcion: newGroupDesc, miembros: creada.visitantes.map((v) => ({ email: v.emailVisitante, telefono: '' })) })
-                      setShowGroupPrompt(false)
-                      setNewGroupName('')
-                      setNewGroupDesc('')
-                    }}>Guardar grupo</Button>
-                  </div>
-                </section>
-              )}
-
-              {membersChanged && !showGroupUpdate && (
-                <section className="table-panel" style={{ marginTop: 20, textAlign: 'center' }}>
-                  <p style={{ marginBottom: 12 }}>Modificaste los miembros del grupo &ldquo;{selectedGrupoNombre}&rdquo;.</p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 16 }}>Deseas actualizar el grupo con los nuevos miembros?</p>
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                    <Button variant="secondary" size="sm" onClick={() => setShowGroupUpdate(false)}>No</Button>
-                    <Button variant="primary" size="sm" onClick={async () => {
-                      try {
-                        await actualizarGrupo(selectedGrupoId, { nombre: selectedGrupoNombre, miembros: creada.visitantes.map((v) => ({ email: v.emailVisitante, telefono: '' })) })
-                      } catch { /* group may have been deleted */ }
-                      setShowGroupUpdate(false)
-                    }}>Si, actualizar</Button>
-                  </div>
-                </section>
-              )}
-            </>
-          )
-        })()}
+  if (submitting) {
+    return (
+      <section className="dashboard-content">
+        <div className="dashboard-copy" style={{ textAlign: 'center' }}>
+          <h1>Creando invitacion...</h1>
+          <p>Enviando emails a los visitantes. Esto puede tardar unos segundos.</p>
+        </div>
       </section>
     )
   }
@@ -503,6 +475,66 @@ export function NuevaInvitacionPage() {
             </div>
           </form>
         </section>
+      )}
+
+      {showGroupModal && (
+        <div className="confirm-overlay">
+          <section className="confirm-modal picker-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            {!selectedGrupoId ? (
+              <>
+                {!showGroupPrompt ? (
+                  <>
+                    <h2>Guardar como grupo?</h2>
+                    <p style={{ marginBottom: 16 }}>Los grupos permiten crear invitaciones para las mismas personas facilmente en el futuro.</p>
+                    <div className="confirm-actions">
+                      <Button variant="secondary" onClick={() => { setShowGroupModal(false); doSubmit() }}>No, continuar</Button>
+                      <Button variant="primary" onClick={() => setShowGroupPrompt(true)}>Si, crear grupo</Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2>Nuevo grupo</h2>
+                    <label className="field">
+                      <span>Nombre del grupo</span>
+                      <input type="text" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="Ej: Equipo de Marketing" autoFocus />
+                    </label>
+                    <label className="field" style={{ marginTop: 8 }}>
+                      <span>Descripcion (opcional)</span>
+                      <input type="text" value={newGroupDesc} onChange={(e) => setNewGroupDesc(e.target.value)} placeholder="Ej: Reunion mensual" />
+                    </label>
+                    <div className="confirm-actions" style={{ marginTop: 16 }}>
+                      <Button variant="secondary" onClick={() => { setShowGroupPrompt(false); setShowGroupModal(false); doSubmit() }}>Cancelar</Button>
+                      <Button variant="primary" onClick={async () => {
+                        if (!newGroupName.trim()) return
+                        const visitantesValidos = visitantes.filter((v) => v.email.trim())
+                        await crearGrupo({ nombre: newGroupName, descripcion: newGroupDesc, miembros: visitantesValidos.map((v) => ({ email: v.email, telefono: v.telefono })) })
+                        setShowGroupPrompt(false)
+                        setNewGroupName('')
+                        setNewGroupDesc('')
+                        doSubmit()
+                      }}>Guardar y continuar</Button>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <h2>Actualizar grupo?</h2>
+                <p style={{ marginBottom: 16 }}>Modificaste los miembros del grupo &ldquo;{selectedGrupoNombre}&rdquo;. Deseas actualizar el grupo con los nuevos miembros?</p>
+                <div className="confirm-actions">
+                  <Button variant="secondary" onClick={() => { setShowGroupModal(false); doSubmit() }}>No, continuar</Button>
+                  <Button variant="primary" onClick={async () => {
+                    const visitantesValidos = visitantes.filter((v) => v.email.trim())
+                    try {
+                      await actualizarGrupo(selectedGrupoId, { nombre: selectedGrupoNombre, miembros: visitantesValidos.map((v) => ({ email: v.email, telefono: v.telefono })) })
+                    } catch { /* group may have been deleted */ }
+                    doSubmit()
+                  }}>Si, actualizar</Button>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
       )}
     </section>
   )

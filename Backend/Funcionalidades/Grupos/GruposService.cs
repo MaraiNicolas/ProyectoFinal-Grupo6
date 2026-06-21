@@ -39,13 +39,16 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Grupos
                 CreadoPorUsuarioId = usuarioId
             };
 
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var m in request.Miembros)
             {
                 if (string.IsNullOrWhiteSpace(m.Email)) continue;
+                var email = m.Email.Trim().ToLower();
+                if (!seen.Add(email)) continue;
                 grupo.Miembros.Add(new GrupoVisitanteMiembro
                 {
                     GrupoId = grupo.Guid,
-                    Email = m.Email.Trim().ToLower(),
+                    Email = email,
                     Telefono = m.Telefono
                 });
             }
@@ -68,13 +71,16 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Grupos
 
             _context.Set<GrupoVisitanteMiembro>().RemoveRange(grupo.Miembros);
 
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var m in request.Miembros)
             {
                 if (string.IsNullOrWhiteSpace(m.Email)) continue;
+                var email = m.Email.Trim().ToLower();
+                if (!seen.Add(email)) continue;
                 _context.Set<GrupoVisitanteMiembro>().Add(new GrupoVisitanteMiembro
                 {
                     GrupoId = grupo.Guid,
-                    Email = m.Email.Trim().ToLower(),
+                    Email = email,
                     Telefono = m.Telefono
                 });
             }

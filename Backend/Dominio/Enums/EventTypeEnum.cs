@@ -4,7 +4,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Enums
 {
     public enum EventTypeEnum
     {
-        [Description("Invitación Creada")]
+        [Description("Invitacion Creada")]
         INVITATION_CREATED,
 
         [Description("Formulario Completado")]
@@ -13,10 +13,10 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Enums
         [Description("Reserva Creada")]
         RESERVATION_CREATED,
 
-        [Description("Invitación Expirada")]
+        [Description("Invitacion Expirada")]
         INVITATION_EXPIRED,
 
-        [Description("Invitación Cancelada")]
+        [Description("Invitacion Cancelada")]
         INVITATION_CANCELLED,
 
         [Description("Visitante Cancelado")]

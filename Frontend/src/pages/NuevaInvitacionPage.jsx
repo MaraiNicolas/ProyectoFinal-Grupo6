@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { crearInvitacion, obtenerDestinos, obtenerConfiguracion } from '../services/api'
+import { crearInvitacion, obtenerDestinos, obtenerConfiguracion, obtenerGrupos, obtenerGrupo, crearGrupo, actualizarGrupo } from '../services/api'
 import { Button } from '../components/Button'
 import { BuscadorVisitantes } from '../components/BuscadorVisitantes'
 
@@ -32,6 +32,15 @@ export function NuevaInvitacionPage() {
   })
   const [visitantes, setVisitantes] = useState([{ email: searchParams.get('email') || '', telefono: '' }])
 
+  const [grupos, setGrupos] = useState([])
+  const [selectedGrupoId, setSelectedGrupoId] = useState(searchParams.get('grupoId') || null)
+  const [selectedGrupoNombre, setSelectedGrupoNombre] = useState('')
+  const [originalGrupoEmails, setOriginalGrupoEmails] = useState([])
+  const [showGroupPrompt, setShowGroupPrompt] = useState(false)
+  const [showGroupUpdate, setShowGroupUpdate] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [newGroupDesc, setNewGroupDesc] = useState('')
+
   const [showWizard, setShowWizard] = useState(!searchParams.get('email'))
   const [wizardStep, setWizardStep] = useState(0)
   const [wizardDone, setWizardDone] = useState(!!searchParams.get('email'))
@@ -51,6 +60,22 @@ export function NuevaInvitacionPage() {
     })
   }, [])
 
+  useEffect(() => {
+    obtenerGrupos().then((data) => setGrupos(data || []))
+
+    const grupoId = searchParams.get('grupoId')
+    if (grupoId) {
+      obtenerGrupo(grupoId).then((data) => {
+        if (data?.miembros) {
+          setVisitantes(data.miembros.map((m) => ({ email: m.email, telefono: m.telefono || '' })))
+          setSelectedGrupoId(grupoId)
+          setSelectedGrupoNombre(data.nombre)
+          setOriginalGrupoEmails(data.miembros.map((m) => m.email.toLowerCase()).sort())
+        }
+      })
+    }
+  }, [])
+
   const handleFormChange = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }))
   }
@@ -65,6 +90,22 @@ export function NuevaInvitacionPage() {
 
   const removeVisitante = (index) => {
     setVisitantes((current) => current.filter((_, i) => i !== index))
+  }
+
+  const handleSelectGrupo = async (grupoId) => {
+    if (!grupoId) {
+      setSelectedGrupoId(null)
+      setSelectedGrupoNombre('')
+      setOriginalGrupoEmails([])
+      return
+    }
+    const data = await obtenerGrupo(grupoId)
+    if (data?.miembros) {
+      setVisitantes(data.miembros.map((m) => ({ email: m.email, telefono: m.telefono || '' })))
+      setSelectedGrupoId(grupoId)
+      setSelectedGrupoNombre(data.nombre)
+      setOriginalGrupoEmails(data.miembros.map((m) => m.email.toLowerCase()).sort())
+    }
   }
 
   const addFromSearch = (visitante) => {
@@ -171,6 +212,66 @@ export function NuevaInvitacionPage() {
             Crear otra
           </Button>
         </div>
+
+        {(() => {
+          const validEmails = creada.visitantes?.map((v) => v.emailVisitante.toLowerCase()).sort() || []
+          const membersChanged = selectedGrupoId && JSON.stringify(validEmails) !== JSON.stringify(originalGrupoEmails)
+          const canCreateGroup = !selectedGrupoId && validEmails.length >= 2
+
+          return (
+            <>
+              {canCreateGroup && !showGroupPrompt && (
+                <section className="table-panel" style={{ marginTop: 20, textAlign: 'center' }}>
+                  <p style={{ marginBottom: 12 }}>Deseas guardar estos visitantes como un grupo?</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 16 }}>Los grupos permiten crear invitaciones para las mismas personas facilmente en el futuro.</p>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <Button variant="secondary" size="sm" onClick={() => setShowGroupPrompt(false)}>No</Button>
+                    <Button variant="primary" size="sm" onClick={() => setShowGroupPrompt(true)}>Si, crear grupo</Button>
+                  </div>
+                </section>
+              )}
+
+              {showGroupPrompt && (
+                <section className="table-panel" style={{ marginTop: 20 }}>
+                  <label className="field">
+                    <span>Nombre del grupo</span>
+                    <input type="text" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="Ej: Equipo de Marketing" />
+                  </label>
+                  <label className="field" style={{ marginTop: 8 }}>
+                    <span>Descripcion (opcional)</span>
+                    <input type="text" value={newGroupDesc} onChange={(e) => setNewGroupDesc(e.target.value)} placeholder="Ej: Reunion mensual" />
+                  </label>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+                    <Button variant="secondary" size="sm" onClick={() => setShowGroupPrompt(false)}>Cancelar</Button>
+                    <Button variant="primary" size="sm" onClick={async () => {
+                      if (!newGroupName.trim()) return
+                      await crearGrupo({ nombre: newGroupName, descripcion: newGroupDesc, miembros: creada.visitantes.map((v) => ({ email: v.emailVisitante, telefono: '' })) })
+                      setShowGroupPrompt(false)
+                      setNewGroupName('')
+                      setNewGroupDesc('')
+                    }}>Guardar grupo</Button>
+                  </div>
+                </section>
+              )}
+
+              {membersChanged && !showGroupUpdate && (
+                <section className="table-panel" style={{ marginTop: 20, textAlign: 'center' }}>
+                  <p style={{ marginBottom: 12 }}>Modificaste los miembros del grupo &ldquo;{selectedGrupoNombre}&rdquo;.</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 16 }}>Deseas actualizar el grupo con los nuevos miembros?</p>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <Button variant="secondary" size="sm" onClick={() => setShowGroupUpdate(false)}>No</Button>
+                    <Button variant="primary" size="sm" onClick={async () => {
+                      try {
+                        await actualizarGrupo(selectedGrupoId, { nombre: selectedGrupoNombre, miembros: creada.visitantes.map((v) => ({ email: v.emailVisitante, telefono: '' })) })
+                      } catch { /* group may have been deleted */ }
+                      setShowGroupUpdate(false)
+                    }}>Si, actualizar</Button>
+                  </div>
+                </section>
+              )}
+            </>
+          )
+        })()}
       </section>
     )
   }
@@ -245,6 +346,21 @@ export function NuevaInvitacionPage() {
 
               {WIZARD_STEPS[wizardStep].key === 'visitantes' && (
                 <div>
+                  {grupos.length > 0 && (
+                    <label className="field" style={{ marginBottom: 12 }}>
+                      <span>Seleccionar grupo</span>
+                      <select
+                        className="field-select"
+                        value={selectedGrupoId || ''}
+                        onChange={(e) => handleSelectGrupo(e.target.value || null)}
+                      >
+                        <option value="">Sin grupo</option>
+                        {grupos.map((g) => (
+                          <option key={g.guid} value={g.guid}>{g.nombre} ({g.cantidadMiembros} miembros)</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <BuscadorVisitantes onSelect={addFromSearch} excludeEmails={visitantes.map((v) => v.email)} />
 
                   <label className="field" style={{ marginTop: 4 }}>

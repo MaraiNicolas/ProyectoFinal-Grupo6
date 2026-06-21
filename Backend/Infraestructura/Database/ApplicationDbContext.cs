@@ -31,6 +31,8 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
             modelBuilder.Entity<InvitacionVisitante>().HasKey(e => e.Guid);
             modelBuilder.Entity<AuditLog>().HasKey(e => e.Guid);
             modelBuilder.Entity<Configuracion>().HasKey(e => e.Guid);
+            modelBuilder.Entity<GrupoVisitantes>().HasKey(e => e.Guid);
+            modelBuilder.Entity<GrupoVisitanteMiembro>().HasKey(e => e.Guid);
 
             // Invitacion → Usuario
             modelBuilder.Entity<Invitacion>()
@@ -60,6 +62,23 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Database
             // Unique index on Token
             modelBuilder.Entity<InvitacionVisitante>()
                 .HasIndex(iv => iv.Token)
+                .IsUnique();
+
+            // GrupoVisitantes
+            modelBuilder.Entity<GrupoVisitantes>()
+                .HasOne(g => g.CreadoPor)
+                .WithMany()
+                .HasForeignKey(g => g.CreadoPorUsuarioId);
+
+            // GrupoVisitanteMiembro
+            modelBuilder.Entity<GrupoVisitanteMiembro>()
+                .HasOne(m => m.Grupo)
+                .WithMany(g => g.Miembros)
+                .HasForeignKey(m => m.GrupoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GrupoVisitanteMiembro>()
+                .HasIndex(m => new { m.GrupoId, m.Email })
                 .IsUnique();
 
             // Unique index on Configuracion.Clave

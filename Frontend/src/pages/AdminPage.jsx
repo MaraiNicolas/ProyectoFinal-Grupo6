@@ -8,7 +8,7 @@ import {
 import { Button } from '../components/Button'
 import { estadoFormularios } from '../components/EstadoHelpers'
 
-const TABS = ['Invitaciones', 'Usuarios', 'Destinos', 'Configuracion', 'Audit Logs']
+const TABS = ['Invitaciones', 'Destinos', 'Configuracion', 'Audit Logs']
 
 function FilterChips({ filters, onRemove }) {
   const entries = Object.entries(filters).filter(([, v]) => v !== '' && v !== null)

@@ -11,6 +11,7 @@ services:
       # --- ASP.NET Core ---
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
+      TZ: America/Argentina/Buenos_Aires
 
       # --- Base de datos (SQLite por defecto) ---
       # El archivo se persiste en el volumen Docker "sqlite-data" montado en /app/data.

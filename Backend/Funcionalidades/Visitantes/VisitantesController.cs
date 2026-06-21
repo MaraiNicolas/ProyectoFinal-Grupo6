@@ -31,5 +31,15 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
                 v.NumeroDocumento
             }));
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Eliminar(Guid id)
+        {
+            var eliminado = await _service.EliminarVisitante(id);
+            if (!eliminado)
+                return NotFound(new { mensaje = "Visitante no encontrado" });
+
+            return NoContent();
+        }
     }
 }

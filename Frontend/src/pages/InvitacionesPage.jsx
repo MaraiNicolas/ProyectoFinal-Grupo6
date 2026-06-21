@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { obtenerInvitaciones } from '../services/api'
+import { obtenerInvitaciones, eliminarInvitacion } from '../services/api'
 import { Button } from '../components/Button'
 import { estadoFormularios } from '../components/EstadoHelpers'
 
@@ -48,6 +48,7 @@ export function InvitacionesPage() {
   const [loading, setLoading] = useState(true)
   const [quickFilter, setQuickFilter] = useState('todas')
   const [customDate, setCustomDate] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   useEffect(() => {
     obtenerInvitaciones().then((data) => {
@@ -74,6 +75,13 @@ export function InvitacionesPage() {
       return fecha >= range.desde && fecha <= range.hasta
     })
   })()
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return
+    await eliminarInvitacion(deleteConfirm.guid)
+    setDeleteConfirm(null)
+    setInvitaciones((current) => current.filter((i) => i.guid !== deleteConfirm.guid))
+  }
 
   return (
     <section className="dashboard-content visitors-view">
@@ -121,6 +129,7 @@ export function InvitacionesPage() {
                 <th>Motivo</th>
                 <th>Destino</th>
                 <th>Visitantes</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -137,12 +146,33 @@ export function InvitacionesPage() {
                   <td>{inv.motivo || '-'}</td>
                   <td>{inv.destino?.nombre || '-'}</td>
                   <td>{inv.visitantesCompletados}/{inv.cantidadVisitantes}</td>
+                  <td>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(inv) }}
+                    >
+                      Eliminar
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </section>
+      {deleteConfirm && (
+        <div className="confirm-overlay" onClick={() => setDeleteConfirm(null)}>
+          <section className="confirm-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h2>Eliminar invitacion</h2>
+            <p>Estas seguro que deseas eliminar la invitacion <strong>{deleteConfirm.titulo}</strong>? Esta accion no se puede deshacer.</p>
+            <div className="confirm-actions">
+              <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>No</Button>
+              <Button variant="danger" onClick={handleDelete}>Si, eliminar</Button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }

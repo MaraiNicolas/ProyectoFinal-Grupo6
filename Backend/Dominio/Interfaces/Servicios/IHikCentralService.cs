@@ -8,6 +8,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios
     {
         Task<HikVisitante?> BuscarVisitantePorEmail(string email);
         Task<HikReservaResponse> CrearReserva(HikReservaRequest request);
+        Task<HikCancelacionResponse> CancelarReserva(string appointRecordId, HikReservaRequest requestOriginal);
         Task<string?> ObtenerVersion();
     }
 
@@ -23,6 +24,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios
         public string? CertificateType { get; set; }
         public string? CertificateNum { get; set; }
         public string? Organization { get; set; }
+        public string? Remark { get; set; }
     }
 
     public class HikReservaRequest
@@ -46,6 +48,13 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios
         public string? ReservationId { get; set; }
         public string? VisitorId { get; set; }
         public string? QrCodeImage { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
+    public class HikCancelacionResponse
+    {
+        public bool Success { get; set; }
+        public string? NewReservationId { get; set; }
         public string? ErrorMessage { get; set; }
     }
 }

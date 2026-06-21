@@ -49,6 +49,17 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
             };
         }
 
+        public async Task<HikCancelacionResponse> CancelarReserva(string appointRecordId, HikReservaRequest requestOriginal)
+        {
+            await Task.CompletedTask;
+
+            return new HikCancelacionResponse
+            {
+                Success = true,
+                NewReservationId = $"MOCK-CANCEL-{Guid.NewGuid().ToString()[..8].ToUpper()}"
+            };
+        }
+
         public async Task<string?> ObtenerVersion()
         {
             await Task.CompletedTask;

@@ -11,6 +11,7 @@ services:
       # --- ASP.NET Core ---
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
+      TZ: America/Argentina/Buenos_Aires
 
       # --- Base de datos (SQLite por defecto) ---
       # El archivo se persiste en el volumen Docker "sqlite-data" montado en /app/data.
@@ -30,9 +31,18 @@ services:
       Finnegans__CacheTtlMinutes: "${FINNEGANS_CACHE_TTL_MINUTES:-5}"
 
       # --- Servicios externos (mock por defecto en contenedor) ---
+      App__BaseUrl: "${APP_BASE_URL:-http://localhost:3000}"
       HikCentral__UseMock: "${HIKCENTRAL_USE_MOCK:-true}"
+      HikCentral__BaseUrl: "${HIKCENTRAL_BASE_URL}"
+      HikCentral__PartnerKey: "${HIKCENTRAL_PARTNER_KEY}"
+      HikCentral__PartnerSecret: "${HIKCENTRAL_PARTNER_SECRET}"
       AuditLog__UseMock: "${AUDIT_USE_MOCK:-true}"
       Email__UseMock: "${EMAIL_USE_MOCK:-true}"
+      Email__Host: "${EMAIL_HOST}"
+      Email__Port: "${EMAIL_PORT:-587}"
+      Email__User: "${EMAIL_USER}"
+      Email__Password: "${EMAIL_PASSWORD}"
+      Email__FromName: "${EMAIL_FROM_NAME:-Sistema de Visitas}"
 
       # --- DynamoDB (auditoria) ---
       # Apunta al servicio dynamodb-local del compose. Ignorado si AuditLog__UseMock=true.

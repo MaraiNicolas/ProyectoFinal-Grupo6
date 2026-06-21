@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { crearInvitacion, obtenerDestinos, obtenerConfiguracion } from '../services/api'
+import { crearInvitacion, obtenerDestinos, obtenerConfiguracion, obtenerGrupos, obtenerGrupo, crearGrupo, actualizarGrupo } from '../services/api'
 import { Button } from '../components/Button'
 import { BuscadorVisitantes } from '../components/BuscadorVisitantes'
 
@@ -32,6 +32,17 @@ export function NuevaInvitacionPage() {
   })
   const [visitantes, setVisitantes] = useState([{ email: searchParams.get('email') || '', telefono: '' }])
 
+  const [grupos, setGrupos] = useState([])
+  const [selectedGrupoId, setSelectedGrupoId] = useState(searchParams.get('grupoId') || null)
+  const [selectedGrupoNombre, setSelectedGrupoNombre] = useState('')
+  const [originalGrupoEmails, setOriginalGrupoEmails] = useState([])
+  const [showGroupPrompt, setShowGroupPrompt] = useState(false)
+  const [showGroupUpdate, setShowGroupUpdate] = useState(false)
+  const [showGroupModal, setShowGroupModal] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [newGroupDesc, setNewGroupDesc] = useState('')
+
   const [showWizard, setShowWizard] = useState(!searchParams.get('email'))
   const [wizardStep, setWizardStep] = useState(0)
   const [wizardDone, setWizardDone] = useState(!!searchParams.get('email'))
@@ -51,6 +62,22 @@ export function NuevaInvitacionPage() {
     })
   }, [])
 
+  useEffect(() => {
+    obtenerGrupos().then((data) => setGrupos(data || []))
+
+    const grupoId = searchParams.get('grupoId')
+    if (grupoId) {
+      obtenerGrupo(grupoId).then((data) => {
+        if (data?.miembros) {
+          setVisitantes(data.miembros.map((m) => ({ email: m.email, telefono: m.telefono || '' })))
+          setSelectedGrupoId(grupoId)
+          setSelectedGrupoNombre(data.nombre)
+          setOriginalGrupoEmails(data.miembros.map((m) => m.email.toLowerCase()).sort())
+        }
+      })
+    }
+  }, [])
+
   const handleFormChange = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }))
   }
@@ -65,6 +92,22 @@ export function NuevaInvitacionPage() {
 
   const removeVisitante = (index) => {
     setVisitantes((current) => current.filter((_, i) => i !== index))
+  }
+
+  const handleSelectGrupo = async (grupoId) => {
+    if (!grupoId) {
+      setSelectedGrupoId(null)
+      setSelectedGrupoNombre('')
+      setOriginalGrupoEmails([])
+      return
+    }
+    const data = await obtenerGrupo(grupoId)
+    if (data?.miembros) {
+      setVisitantes(data.miembros.map((m) => ({ email: m.email, telefono: m.telefono || '' })))
+      setSelectedGrupoId(grupoId)
+      setSelectedGrupoNombre(data.nombre)
+      setOriginalGrupoEmails(data.miembros.map((m) => m.email.toLowerCase()).sort())
+    }
   }
 
   const addFromSearch = (visitante) => {
@@ -111,6 +154,26 @@ export function NuevaInvitacionPage() {
     handleNext()
   }
 
+  const doSubmit = async () => {
+    setSubmitting(true)
+    setShowGroupModal(false)
+    setError('')
+
+    const visitantesValidos = visitantes.filter((v) => v.email.trim())
+    try {
+      const data = await crearInvitacion({
+        ...form,
+        horaInicio: form.horaInicio + ':00',
+        horaFin: form.horaFin + ':00',
+        visitantes: visitantesValidos,
+      })
+      setCreada(data)
+    } catch {
+      setError('Error al crear la invitacion.')
+    }
+    setSubmitting(false)
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
@@ -126,17 +189,15 @@ export function NuevaInvitacionPage() {
       return
     }
 
-    try {
-      const data = await crearInvitacion({
-        ...form,
-        horaInicio: form.horaInicio + ':00',
-        horaFin: form.horaFin + ':00',
-        visitantes: visitantesValidos,
-      })
-      setCreada(data)
-    } catch {
-      setError('Error al crear la invitacion.')
+    const membersChanged = selectedGrupoId && JSON.stringify(visitantesValidos.map((v) => v.email.toLowerCase()).sort()) !== JSON.stringify(originalGrupoEmails)
+    const canCreateGroup = !selectedGrupoId && visitantesValidos.length >= 2
+
+    if (canCreateGroup || membersChanged) {
+      setShowGroupModal(true)
+      return
     }
+
+    doSubmit()
   }
 
   if (creada) {
@@ -170,6 +231,18 @@ export function NuevaInvitacionPage() {
           <Button variant="primary" onClick={() => { setCreada(null); setVisitantes([{ email: '', telefono: '' }]); setShowWizard(true); setWizardStep(0); setWizardDone(false); setForm(f => ({ ...f, titulo: '', descripcion: '', motivo: '', fecha: '', horaInicio: '', horaFin: '' })) }}>
             Crear otra
           </Button>
+        </div>
+
+      </section>
+    )
+  }
+
+  if (submitting) {
+    return (
+      <section className="dashboard-content">
+        <div className="dashboard-copy" style={{ textAlign: 'center' }}>
+          <h1>Creando invitacion...</h1>
+          <p>Enviando emails a los visitantes. Esto puede tardar unos segundos.</p>
         </div>
       </section>
     )
@@ -245,6 +318,21 @@ export function NuevaInvitacionPage() {
 
               {WIZARD_STEPS[wizardStep].key === 'visitantes' && (
                 <div>
+                  {grupos.length > 0 && (
+                    <label className="field" style={{ marginBottom: 12 }}>
+                      <span>Seleccionar grupo</span>
+                      <select
+                        className="field-select"
+                        value={selectedGrupoId || ''}
+                        onChange={(e) => handleSelectGrupo(e.target.value || null)}
+                      >
+                        <option value="">Sin grupo</option>
+                        {grupos.map((g) => (
+                          <option key={g.guid} value={g.guid}>{g.nombre} ({g.cantidadMiembros} miembros)</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <BuscadorVisitantes onSelect={addFromSearch} excludeEmails={visitantes.map((v) => v.email)} />
 
                   <label className="field" style={{ marginTop: 4 }}>
@@ -387,6 +475,66 @@ export function NuevaInvitacionPage() {
             </div>
           </form>
         </section>
+      )}
+
+      {showGroupModal && (
+        <div className="confirm-overlay">
+          <section className="confirm-modal picker-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            {!selectedGrupoId ? (
+              <>
+                {!showGroupPrompt ? (
+                  <>
+                    <h2>Guardar como grupo?</h2>
+                    <p style={{ marginBottom: 16 }}>Los grupos permiten crear invitaciones para las mismas personas facilmente en el futuro.</p>
+                    <div className="confirm-actions">
+                      <Button variant="secondary" onClick={() => { setShowGroupModal(false); doSubmit() }}>No, continuar</Button>
+                      <Button variant="primary" onClick={() => setShowGroupPrompt(true)}>Si, crear grupo</Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2>Nuevo grupo</h2>
+                    <label className="field">
+                      <span>Nombre del grupo</span>
+                      <input type="text" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="Ej: Equipo de Marketing" autoFocus />
+                    </label>
+                    <label className="field" style={{ marginTop: 8 }}>
+                      <span>Descripcion (opcional)</span>
+                      <input type="text" value={newGroupDesc} onChange={(e) => setNewGroupDesc(e.target.value)} placeholder="Ej: Reunion mensual" />
+                    </label>
+                    <div className="confirm-actions" style={{ marginTop: 16 }}>
+                      <Button variant="secondary" onClick={() => { setShowGroupPrompt(false); setShowGroupModal(false); doSubmit() }}>Cancelar</Button>
+                      <Button variant="primary" onClick={async () => {
+                        if (!newGroupName.trim()) return
+                        const visitantesValidos = visitantes.filter((v) => v.email.trim())
+                        await crearGrupo({ nombre: newGroupName, descripcion: newGroupDesc, miembros: visitantesValidos.map((v) => ({ email: v.email, telefono: v.telefono })) })
+                        setShowGroupPrompt(false)
+                        setNewGroupName('')
+                        setNewGroupDesc('')
+                        doSubmit()
+                      }}>Guardar y continuar</Button>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <h2>Actualizar grupo?</h2>
+                <p style={{ marginBottom: 16 }}>Modificaste los miembros del grupo &ldquo;{selectedGrupoNombre}&rdquo;. Deseas actualizar el grupo con los nuevos miembros?</p>
+                <div className="confirm-actions">
+                  <Button variant="secondary" onClick={() => { setShowGroupModal(false); doSubmit() }}>No, continuar</Button>
+                  <Button variant="primary" onClick={async () => {
+                    const visitantesValidos = visitantes.filter((v) => v.email.trim())
+                    try {
+                      await actualizarGrupo(selectedGrupoId, { nombre: selectedGrupoNombre, miembros: visitantesValidos.map((v) => ({ email: v.email, telefono: v.telefono })) })
+                    } catch { /* group may have been deleted */ }
+                    doSubmit()
+                  }}>Si, actualizar</Button>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
       )}
     </section>
   )

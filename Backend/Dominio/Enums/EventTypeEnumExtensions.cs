@@ -5,7 +5,7 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Enums
 {
     public static class EventTypeEnumExtensions
     {
-        // Devuelve la descripción en español del enum (atributo [Description]).
+        // Devuelve la descripcion en espanol del enum (atributo [Description]).
         // Si el string no corresponde a un valor del enum, retorna el mismo string.
         public static string ObtenerDescripcion(string? eventType)
         {

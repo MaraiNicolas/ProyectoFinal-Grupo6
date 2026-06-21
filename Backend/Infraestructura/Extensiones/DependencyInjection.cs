@@ -15,6 +15,7 @@ using ProyectoFinal_Grupo6.Api.Funcionalidades.Destinos;
 using ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones;
 using ProyectoFinal_Grupo6.Api.Funcionalidades.Registro;
 using ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes;
+using ProyectoFinal_Grupo6.Api.Funcionalidades.Grupos;
 using System.Reflection;
 using Amazon.DynamoDBv2;
 
@@ -58,6 +59,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Extensiones
             services.AddScoped<VisitantesService>();
             services.AddScoped<DestinosService>();
             services.AddScoped<AdminService>();
+            services.AddScoped<GruposService>();
 
             // HikCentral: mock o real segun configuracion
             var useMock = config.GetValue<bool>("HikCentral:UseMock", true);

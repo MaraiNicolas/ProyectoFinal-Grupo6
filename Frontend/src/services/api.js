@@ -143,6 +143,33 @@ export function eliminarVisitante(id) {
   return request(`/visitantes/${id}`, { method: "DELETE" });
 }
 
+// --- Grupos ---
+export function obtenerGrupos() {
+  return request("/grupos");
+}
+
+export function obtenerGrupo(id) {
+  return request(`/grupos/${id}`);
+}
+
+export function crearGrupo(data) {
+  return request("/grupos", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function actualizarGrupo(id, data) {
+  return request(`/grupos/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function eliminarGrupo(id) {
+  return request(`/grupos/${id}`, { method: "DELETE" });
+}
+
 // --- Destinos ---
 export function obtenerDestinos() {
   return request("/destinos");

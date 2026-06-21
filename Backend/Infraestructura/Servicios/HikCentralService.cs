@@ -18,7 +18,8 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
         private readonly string _baseUrl;
         private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-        private const string ENDPOINT_APPOINTMENT = "/artemis/api/visitor/v1/appointment";
+        private const string ENDPOINT_REGISTERMENT = "/artemis/api/visitor/v1/registerment";
+        private const string ENDPOINT_REGISTERMENT_UPDATE = "/artemis/api/visitor/v1/registerment/update";
         private const string ENDPOINT_VERSION = "/artemis/api/common/v1/version";
 
         public HikCentralService(HttpClient httpClient, IConfiguration configuration, ILogger<HikCentralService> logger)
@@ -44,7 +45,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 
         public async Task<HikReservaResponse> CrearReserva(HikReservaRequest request)
         {
-            var response = await CallApi(ENDPOINT_APPOINTMENT, request);
+            var response = await CallApi(ENDPOINT_REGISTERMENT, request);
 
             if (response == null)
             {
@@ -75,6 +76,60 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
                 ReservationId = data.TryGetProperty("appointRecordId", out var rid) ? rid.GetString() : null,
                 VisitorId = data.TryGetProperty("visitorId", out var vid) ? vid.GetString() : null,
                 QrCodeImage = data.TryGetProperty("qrCodeImage", out var qr) ? qr.GetString() : null
+            };
+        }
+
+        public async Task<HikCancelacionResponse> CancelarReserva(string appointRecordId, HikReservaRequest requestOriginal)
+        {
+            var pastDate = DateTime.UtcNow.AddHours(-24).Date;
+            var updateBody = new
+            {
+                AppointRecordId = appointRecordId,
+                VisitStartTime = $"{pastDate:yyyy-MM-dd}T00:00:00-03:00",
+                VisitEndTime = $"{pastDate:yyyy-MM-dd}T01:00:00-03:00",
+                VisitPurposeType = 0,
+                VisitPurpose = $"CANCELADO - {requestOriginal.VisitPurpose}",
+                VisitorInfoList = requestOriginal.VisitorInfoList
+            };
+
+            _logger.LogInformation("CancelarReserva: appointRecordId={Id}, body={Body}",
+                appointRecordId, System.Text.Json.JsonSerializer.Serialize(updateBody, _jsonOptions));
+
+            var response = await CallApi(ENDPOINT_REGISTERMENT_UPDATE, updateBody);
+
+            if (response == null)
+            {
+                return new HikCancelacionResponse
+                {
+                    Success = false,
+                    ErrorMessage = "No se pudo conectar con HikCentral. Verifique la VPN."
+                };
+            }
+
+            var root = response.RootElement;
+            var responseText = root.ToString();
+            _logger.LogInformation("CancelarReserva response: {Response}", responseText);
+
+            var code = root.TryGetProperty("code", out var codeProp) ? codeProp.GetString() : null;
+
+            if (code != "0")
+            {
+                var msg = root.TryGetProperty("msg", out var msgProp) ? msgProp.GetString() : "Error desconocido";
+                _logger.LogWarning("CancelarReserva fallo: code={Code}, msg={Msg}", code, msg);
+                return new HikCancelacionResponse
+                {
+                    Success = false,
+                    ErrorMessage = $"HikCentral error ({code}): {msg}"
+                };
+            }
+
+            var data = root.GetProperty("data");
+            var newId = data.TryGetProperty("appointRecordId", out var rid) ? rid.GetString() : null;
+            _logger.LogInformation("CancelarReserva exitosa: newId={NewId}", newId);
+            return new HikCancelacionResponse
+            {
+                Success = true,
+                NewReservationId = newId
             };
         }
 

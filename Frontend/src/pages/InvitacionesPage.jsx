@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { obtenerInvitaciones } from '../services/api'
 import { Button } from '../components/Button'
+import { Paginacion } from '../components/Paginacion'
 import { estadoFormularios } from '../components/EstadoHelpers'
 
 const QUICK_FILTERS = [
@@ -48,6 +49,8 @@ export function InvitacionesPage() {
   const [loading, setLoading] = useState(true)
   const [quickFilter, setQuickFilter] = useState('todas')
   const [customDate, setCustomDate] = useState('')
+  const [pagina, setPagina] = useState(1)
+  const tamano = 10
 
   useEffect(() => {
     obtenerInvitaciones().then((data) => {
@@ -75,6 +78,9 @@ export function InvitacionesPage() {
     })
   })()
 
+  const totalPaginas = Math.max(1, Math.ceil(filtered.length / tamano))
+  const paginada = filtered.slice((pagina - 1) * tamano, pagina * tamano)
+
   return (
     <section className="dashboard-content visitors-view">
       <div className="content-header">
@@ -92,7 +98,7 @@ export function InvitacionesPage() {
             key={f.key}
             variant={quickFilter === f.key && !customDate ? 'primary' : 'secondary'}
             size="sm"
-            onClick={() => { setQuickFilter(f.key); setCustomDate('') }}
+            onClick={() => { setQuickFilter(f.key); setCustomDate(''); setPagina(1) }}
           >
             {f.label}
           </Button>
@@ -100,7 +106,7 @@ export function InvitacionesPage() {
         <input
           type="date"
           value={customDate}
-          onChange={(e) => { setCustomDate(e.target.value); setQuickFilter('') }}
+          onChange={(e) => { setCustomDate(e.target.value); setQuickFilter(''); setPagina(1) }}
           style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(20,31,56,0.16)', fontSize: '0.85rem' }}
         />
       </section>
@@ -111,6 +117,8 @@ export function InvitacionesPage() {
         ) : filtered.length === 0 ? (
           <p className="empty-state">No hay invitaciones.</p>
         ) : (
+          <>
+          <div className="table-scroll">
           <table className="visitors-table">
             <thead>
               <tr>
@@ -124,7 +132,7 @@ export function InvitacionesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inv) => (
+              {paginada.map((inv) => (
                 <tr
                   key={inv.guid}
                   style={{ cursor: 'pointer' }}
@@ -141,6 +149,15 @@ export function InvitacionesPage() {
               ))}
             </tbody>
           </table>
+          </div>
+          <Paginacion
+            pagina={pagina}
+            totalPaginas={totalPaginas}
+            total={filtered.length}
+            tamano={tamano}
+            onCambiarPagina={setPagina}
+          />
+          </>
         )}
       </section>
     </section>

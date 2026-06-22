@@ -26,23 +26,33 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
         // --- Invitaciones (todas) ---
 
         [HttpGet("invitaciones")]
-        public async Task<IActionResult> ListarInvitaciones()
+        public async Task<IActionResult> ListarInvitaciones(
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var invitaciones = await _invitacionesService.ObtenerInvitaciones(null);
-            return Ok(invitaciones.Select(i => new
+            var (invitaciones, hasMore) = await _invitacionesService.ObtenerInvitaciones(desde, hasta, null, page, pageSize);
+            return Ok(new
             {
-                i.Guid,
-                i.Titulo,
-                i.Motivo,
-                i.Fecha,
-                i.HoraInicio,
-                i.HoraFin,
-                i.Estado,
-                usuario = i.Usuario != null ? new { i.Usuario.Nombre, i.Usuario.Apellido } : null,
-                destino = i.Destino != null ? new { i.Destino.Nombre } : null,
-                cantidadVisitantes = i.Visitantes.Count,
-                visitantesCompletados = i.Visitantes.Count(v => v.EstadoFormulario == "Completado")
-            }));
+                data = invitaciones.Select(i => new
+                {
+                    i.Guid,
+                    i.Titulo,
+                    i.Motivo,
+                    i.Fecha,
+                    i.HoraInicio,
+                    i.HoraFin,
+                    i.Estado,
+                    usuario = i.Usuario != null ? new { i.Usuario.Nombre, i.Usuario.Apellido } : null,
+                    destino = i.Destino != null ? new { i.Destino.Nombre } : null,
+                    cantidadVisitantes = i.Visitantes.Count,
+                    visitantesCompletados = i.Visitantes.Count(v => v.EstadoFormulario == "Completado")
+                }),
+                page,
+                pageSize,
+                hasMore
+            });
         }
 
         // --- Usuarios ---
@@ -106,23 +116,31 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
         public async Task<IActionResult> ListarAuditLogs(
             [FromQuery] string? eventType,
             [FromQuery] DateTime? desde,
-            [FromQuery] DateTime? hasta)
+            [FromQuery] DateTime? hasta,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var logs = await _service.ObtenerAuditLogs(eventType, desde, hasta);
-            return Ok(logs.Select(a => new
+            var (logs, hasMore) = await _service.ObtenerAuditLogs(eventType, desde, hasta, page, pageSize);
+            return Ok(new
             {
-                a.Guid,
-                a.EventType,
-                EventTypeDescripcion = EventTypeEnumExtensions.ObtenerDescripcion(a.EventType),
-                a.Timestamp,
-                a.UsuarioEmail,
-                a.VisitanteEmail,
-                a.InvitacionTitulo,
-                a.UsuarioId,
-                a.VisitanteId,
-                a.InvitacionId,
-                a.Metadata
-            }));
+                data = logs.Select(a => new
+                {
+                    a.Guid,
+                    a.EventType,
+                    EventTypeDescripcion = EventTypeEnumExtensions.ObtenerDescripcion(a.EventType),
+                    a.Timestamp,
+                    a.UsuarioEmail,
+                    a.VisitanteEmail,
+                    a.InvitacionTitulo,
+                    a.UsuarioId,
+                    a.VisitanteId,
+                    a.InvitacionId,
+                    a.Metadata
+                }),
+                page,
+                pageSize,
+                hasMore
+            });
         }
 
         // --- HikCentral ---

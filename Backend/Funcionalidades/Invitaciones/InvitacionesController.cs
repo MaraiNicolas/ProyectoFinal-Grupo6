@@ -46,25 +46,31 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
         }
 
         [HttpGet]
-        public async Task<IActionResult> Listar([FromQuery] DateTime? fecha)
+        public async Task<IActionResult> Listar([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var usuarioId = ObtenerUsuarioId();
-            var invitaciones = await _service.ObtenerInvitaciones(fecha, usuarioId);
+            var (invitaciones, hasMore) = await _service.ObtenerInvitaciones(desde, hasta, usuarioId, page, pageSize);
 
-            return Ok(invitaciones.Select(i => new
+            return Ok(new
             {
-                i.Guid,
-                i.Titulo,
-                i.Motivo,
-                i.Fecha,
-                i.HoraInicio,
-                i.HoraFin,
-                i.Estado,
-                usuario = i.Usuario != null ? new { i.Usuario.Nombre, i.Usuario.Apellido } : null,
-                destino = i.Destino != null ? new { i.Destino.Nombre } : null,
-                cantidadVisitantes = i.Visitantes.Count,
-                visitantesCompletados = i.Visitantes.Count(v => v.EstadoFormulario == "Completado")
-            }));
+                data = invitaciones.Select(i => new
+                {
+                    i.Guid,
+                    i.Titulo,
+                    i.Motivo,
+                    i.Fecha,
+                    i.HoraInicio,
+                    i.HoraFin,
+                    i.Estado,
+                    usuario = i.Usuario != null ? new { i.Usuario.Nombre, i.Usuario.Apellido } : null,
+                    destino = i.Destino != null ? new { i.Destino.Nombre } : null,
+                    cantidadVisitantes = i.Visitantes.Count,
+                    visitantesCompletados = i.Visitantes.Count(v => v.EstadoFormulario == "Completado")
+                }),
+                page,
+                pageSize,
+                hasMore
+            });
         }
 
         [HttpGet("{id}")]

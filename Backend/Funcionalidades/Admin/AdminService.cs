@@ -79,9 +79,13 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Admin
 
         // --- Audit Logs ---
 
-        public async Task<List<AuditLog>> ObtenerAuditLogs(string? eventType, DateTime? desde, DateTime? hasta)
+        public async Task<(List<AuditLog> Items, bool HasMore)> ObtenerAuditLogs(string? eventType, DateTime? desde, DateTime? hasta, int page = 1, int pageSize = 20)
         {
-            return await _auditLog.ObtenerLogs(eventType, desde, hasta);
+            var allLogs = await _auditLog.ObtenerLogs(eventType, desde, hasta);
+            var items = allLogs.Skip((page - 1) * pageSize).Take(pageSize + 1).ToList();
+            var hasMore = items.Count > pageSize;
+            if (hasMore) items = items.Take(pageSize).ToList();
+            return (items, hasMore);
         }
     }
 

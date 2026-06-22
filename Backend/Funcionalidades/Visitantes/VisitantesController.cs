@@ -16,20 +16,26 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
         }
 
         [HttpGet]
-        public async Task<IActionResult> Listar([FromQuery] string? search)
+        public async Task<IActionResult> Listar([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var visitantes = await _service.ObtenerVisitantes(search);
+            var (visitantes, hasMore) = await _service.ObtenerVisitantes(search, page, pageSize);
 
-            return Ok(visitantes.Select(v => new
+            return Ok(new
             {
-                v.Guid,
-                v.Nombre,
-                v.Apellido,
-                v.Email,
-                v.Telefono,
-                v.TipoDocumento,
-                v.NumeroDocumento
-            }));
+                data = visitantes.Select(v => new
+                {
+                    v.Guid,
+                    v.Nombre,
+                    v.Apellido,
+                    v.Email,
+                    v.Telefono,
+                    v.TipoDocumento,
+                    v.NumeroDocumento
+                }),
+                page,
+                pageSize,
+                hasMore
+            });
         }
 
         [HttpDelete("{id}")]

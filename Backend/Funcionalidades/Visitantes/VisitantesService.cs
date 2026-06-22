@@ -13,7 +13,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
             _context = context;
         }
 
-        public async Task<List<Visitante>> ObtenerVisitantes(string? search)
+        public async Task<(List<Visitante> Items, bool HasMore)> ObtenerVisitantes(string? search, int page = 1, int pageSize = 20)
         {
             var query = _context.Set<Visitante>().AsQueryable();
 
@@ -27,7 +27,11 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Visitantes
                     v.NumeroDocumento.Contains(term));
             }
 
-            return await query.OrderBy(v => v.Apellido).ThenBy(v => v.Nombre).ToListAsync();
+            var items = await query.OrderBy(v => v.Apellido).ThenBy(v => v.Nombre)
+                .Skip((page - 1) * pageSize).Take(pageSize + 1).ToListAsync();
+            var hasMore = items.Count > pageSize;
+            if (hasMore) items = items.Take(pageSize).ToList();
+            return (items, hasMore);
         }
 
         public async Task<bool> EliminarVisitante(Guid id)

@@ -13,13 +13,17 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Grupos
             _context = context;
         }
 
-        public async Task<List<GrupoVisitantes>> ObtenerGrupos()
+        public async Task<(List<GrupoVisitantes> Items, bool HasMore)> ObtenerGrupos(int page = 1, int pageSize = 20)
         {
-            return await _context.Set<GrupoVisitantes>()
+            var items = await _context.Set<GrupoVisitantes>()
                 .Include(g => g.CreadoPor)
                 .Include(g => g.Miembros)
                 .OrderBy(g => g.Nombre)
+                .Skip((page - 1) * pageSize).Take(pageSize + 1)
                 .ToListAsync();
+            var hasMore = items.Count > pageSize;
+            if (hasMore) items = items.Take(pageSize).ToList();
+            return (items, hasMore);
         }
 
         public async Task<GrupoVisitantes?> ObtenerGrupoPorId(Guid id)

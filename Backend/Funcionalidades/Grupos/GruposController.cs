@@ -17,18 +17,24 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Grupos
         }
 
         [HttpGet]
-        public async Task<IActionResult> Listar()
+        public async Task<IActionResult> Listar([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var grupos = await _service.ObtenerGrupos();
-            return Ok(grupos.Select(g => new
+            var (grupos, hasMore) = await _service.ObtenerGrupos(page, pageSize);
+            return Ok(new
             {
-                g.Guid,
-                g.Nombre,
-                g.Descripcion,
-                cantidadMiembros = g.Miembros.Count,
-                creadoPor = g.CreadoPor != null ? $"{g.CreadoPor.Nombre} {g.CreadoPor.Apellido}" : "",
-                g.FechaCreacion
-            }));
+                data = grupos.Select(g => new
+                {
+                    g.Guid,
+                    g.Nombre,
+                    g.Descripcion,
+                    cantidadMiembros = g.Miembros.Count,
+                    creadoPor = g.CreadoPor != null ? $"{g.CreadoPor.Nombre} {g.CreadoPor.Apellido}" : "",
+                    g.FechaCreacion
+                }),
+                page,
+                pageSize,
+                hasMore
+            });
         }
 
         [HttpGet("{id}")]

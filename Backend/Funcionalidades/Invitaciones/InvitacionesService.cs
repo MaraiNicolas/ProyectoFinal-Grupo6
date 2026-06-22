@@ -104,7 +104,6 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
             var items = await query
                 .OrderByDescending(i => i.Fecha)
-                .ThenByDescending(i => i.HoraInicio)
                 .Skip((page - 1) * pageSize).Take(pageSize + 1)
                 .ToListAsync();
             var hasMore = items.Count > pageSize;

@@ -83,9 +83,13 @@ export function estaAutenticado() {
 }
 
 // --- Invitaciones ---
-export function obtenerInvitaciones(fecha) {
-  const params = fecha ? `?fecha=${fecha}` : "";
-  return request(`/invitaciones${params}`);
+export function obtenerInvitaciones(desde, hasta, page = 1, pageSize = 20) {
+  const params = new URLSearchParams();
+  if (desde) params.set("desde", desde);
+  if (hasta) params.set("hasta", hasta);
+  params.set("page", page);
+  params.set("pageSize", pageSize);
+  return request(`/invitaciones?${params}`);
 }
 
 export function obtenerInvitacion(id) {
@@ -134,9 +138,12 @@ export function completarRegistro(token, data) {
 }
 
 // --- Visitantes ---
-export function obtenerVisitantes(search) {
-  const params = search ? `?search=${encodeURIComponent(search)}` : "";
-  return request(`/visitantes${params}`);
+export function obtenerVisitantes(search, page = 1, pageSize = 20) {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  params.set("page", page);
+  params.set("pageSize", pageSize);
+  return request(`/visitantes?${params}`);
 }
 
 export function eliminarVisitante(id) {
@@ -144,8 +151,11 @@ export function eliminarVisitante(id) {
 }
 
 // --- Grupos ---
-export function obtenerGrupos() {
-  return request("/grupos");
+export function obtenerGrupos(page = 1, pageSize = 20) {
+  const params = new URLSearchParams();
+  params.set("page", page);
+  params.set("pageSize", pageSize);
+  return request(`/grupos?${params}`);
 }
 
 export function obtenerGrupo(id) {
@@ -194,8 +204,13 @@ export function eliminarDestino(id) {
 }
 
 // --- Admin ---
-export function obtenerTodasInvitaciones() {
-  return request("/admin/invitaciones");
+export function obtenerTodasInvitaciones(desde, hasta, page = 1, pageSize = 20) {
+  const params = new URLSearchParams();
+  if (desde) params.set("desde", desde);
+  if (hasta) params.set("hasta", hasta);
+  params.set("page", page);
+  params.set("pageSize", pageSize);
+  return request(`/admin/invitaciones?${params}`);
 }
 
 export function obtenerUsuarios() {
@@ -231,11 +246,12 @@ export function actualizarConfiguracion(clave, valor) {
   });
 }
 
-export function obtenerAuditLogs(eventType, desde, hasta) {
+export function obtenerAuditLogs(eventType, desde, hasta, page = 1, pageSize = 20) {
   const params = new URLSearchParams();
   if (eventType) params.set("eventType", eventType);
   if (desde) params.set("desde", desde);
   if (hasta) params.set("hasta", hasta);
-  const query = params.toString();
-  return request(`/admin/audit-logs${query ? `?${query}` : ""}`);
+  params.set("page", page);
+  params.set("pageSize", pageSize);
+  return request(`/admin/audit-logs?${params}`);
 }

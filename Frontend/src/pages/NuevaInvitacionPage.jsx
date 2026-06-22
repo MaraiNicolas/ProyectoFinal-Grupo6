@@ -63,7 +63,7 @@ export function NuevaInvitacionPage() {
   }, [])
 
   useEffect(() => {
-    obtenerGrupos().then((data) => setGrupos(data || []))
+    obtenerGrupos(1, 100).then((res) => setGrupos(res.data || []))
 
     const grupoId = searchParams.get('grupoId')
     if (grupoId) {

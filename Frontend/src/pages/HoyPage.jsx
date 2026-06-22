@@ -11,8 +11,8 @@ export function HoyPage() {
   const hoy = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
-    obtenerInvitaciones(hoy).then((data) => {
-      setInvitaciones(data || [])
+    obtenerInvitaciones(hoy, hoy, 1, 100).then((res) => {
+      setInvitaciones(res.data || [])
       setLoading(false)
     })
   }, [])

@@ -18,33 +18,44 @@ export function VisitantesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const menuRef = useRef(null)
 
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+
   const [activeTab, setActiveTab] = useState('individual')
   const [grupos, setGrupos] = useState([])
   const [loadingGrupos, setLoadingGrupos] = useState(false)
+  const [gruposPage, setGruposPage] = useState(1)
+  const [gruposHasMore, setGruposHasMore] = useState(false)
   const [editingGroup, setEditingGroup] = useState(null)
   const [editForm, setEditForm] = useState({ nombre: '', descripcion: '', miembros: [] })
   const [deleteGroupConfirm, setDeleteGroupConfirm] = useState(null)
 
   useEffect(() => {
+    setPage(1)
+  }, [search])
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(true)
-      obtenerVisitantes(search || undefined).then((data) => {
-        setVisitantes(data || [])
+      obtenerVisitantes(search || undefined, page).then((res) => {
+        setVisitantes(res.data || [])
+        setHasMore(res.hasMore)
         setLoading(false)
       })
     }, 300)
     return () => clearTimeout(timer)
-  }, [search])
+  }, [search, page])
 
   useEffect(() => {
-    if (activeTab === 'grupos' && grupos.length === 0) {
+    if (activeTab === 'grupos') {
       setLoadingGrupos(true)
-      obtenerGrupos().then((data) => {
-        setGrupos(data || [])
+      obtenerGrupos(gruposPage).then((res) => {
+        setGrupos(res.data || [])
+        setGruposHasMore(res.hasMore)
         setLoadingGrupos(false)
       })
     }
-  }, [activeTab])
+  }, [activeTab, gruposPage])
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -61,8 +72,8 @@ export function VisitantesPage() {
     setPickingFor(visitante)
     setLoadingInvitaciones(true)
     setAddError(null)
-    obtenerInvitaciones().then((data) => {
-      const activas = (data || []).filter((inv) =>
+    obtenerInvitaciones(undefined, undefined, 1, 100).then((res) => {
+      const activas = (res.data || []).filter((inv) =>
         inv.estado === 'Pendiente' || inv.estado === 'Activa'
       )
       setInvitaciones(activas)
@@ -92,7 +103,7 @@ export function VisitantesPage() {
     if (!editForm.nombre.trim() || validMembers.length === 0) return
     await actualizarGrupo(editingGroup.guid, { nombre: editForm.nombre, descripcion: editForm.descripcion, miembros: validMembers })
     setEditingGroup(null)
-    obtenerGrupos().then((data) => setGrupos(data || []))
+    obtenerGrupos(gruposPage).then((res) => { setGrupos(res.data || []); setGruposHasMore(res.hasMore) })
   }
 
   const handleDeleteGroup = async () => {
@@ -213,6 +224,11 @@ export function VisitantesPage() {
                 </tbody>
               </table>
             )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+              <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Pagina {page}</span>
+              <Button variant="secondary" size="sm" disabled={!hasMore} onClick={() => setPage((p) => p + 1)}>Siguiente</Button>
+            </div>
           </section>
 
           {deleteConfirm && (
@@ -307,6 +323,11 @@ export function VisitantesPage() {
                 </tbody>
               </table>
             )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+              <Button variant="secondary" size="sm" disabled={gruposPage <= 1} onClick={() => setGruposPage((p) => p - 1)}>Anterior</Button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Pagina {gruposPage}</span>
+              <Button variant="secondary" size="sm" disabled={!gruposHasMore} onClick={() => setGruposPage((p) => p + 1)}>Siguiente</Button>
+            </div>
           </section>
 
           {deleteGroupConfirm && (

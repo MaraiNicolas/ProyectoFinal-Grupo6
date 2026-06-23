@@ -42,6 +42,8 @@ export function NuevaInvitacionPage() {
   const [submitting, setSubmitting] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [newGroupDesc, setNewGroupDesc] = useState('')
+  const [showPasteArea, setShowPasteArea] = useState(false)
+  const [pasteText, setPasteText] = useState('')
 
   const [showWizard, setShowWizard] = useState(!searchParams.get('email'))
   const [wizardStep, setWizardStep] = useState(0)
@@ -63,7 +65,7 @@ export function NuevaInvitacionPage() {
   }, [])
 
   useEffect(() => {
-    obtenerGrupos().then((data) => setGrupos(data || []))
+    obtenerGrupos(1, 100).then((res) => setGrupos(res.data || []))
 
     const grupoId = searchParams.get('grupoId')
     if (grupoId) {
@@ -108,6 +110,23 @@ export function NuevaInvitacionPage() {
       setSelectedGrupoNombre(data.nombre)
       setOriginalGrupoEmails(data.miembros.map((m) => m.email.toLowerCase()).sort())
     }
+  }
+
+  const handlePasteEmails = () => {
+    const emails = pasteText
+      .split(/[\s,;]+/)
+      .map((e) => e.trim().toLowerCase())
+      .filter((e) => e && e.includes('@'))
+    const existing = visitantes.map((v) => v.email.toLowerCase())
+    const newEmails = emails.filter((e) => !existing.includes(e))
+    const unique = [...new Set(newEmails)]
+    if (unique.length > 0) {
+      const hasEmpty = visitantes.length === 1 && !visitantes[0].email.trim()
+      const newVisitantes = unique.map((e) => ({ email: e, telefono: '' }))
+      setVisitantes(hasEmpty ? newVisitantes : [...visitantes, ...newVisitantes])
+    }
+    setPasteText('')
+    setShowPasteArea(false)
   }
 
   const addFromSearch = (visitante) => {
@@ -356,7 +375,30 @@ export function NuevaInvitacionPage() {
                       </div>
                     </div>
                   ))}
-                  <Button variant="secondary" size="sm" onClick={addVisitante}>Agregar visitante</Button>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                    <Button variant="secondary" size="sm" onClick={addVisitante}>Agregar visitante</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setShowPasteArea(!showPasteArea)}>Pegar lista de emails</Button>
+                  </div>
+
+                  {showPasteArea && (
+                    <div style={{ marginTop: 12 }}>
+                      <label className="field">
+                        <span>Pegar emails separados por coma, espacio o salto de linea</span>
+                        <textarea
+                          rows={3}
+                          value={pasteText}
+                          onChange={(e) => setPasteText(e.target.value)}
+                          placeholder="email1@mail.com, email2@mail.com, email3@mail.com"
+                          style={{ width: '100%', padding: '10px 14px', border: '1px solid rgba(20,31,56,0.16)', borderRadius: 14, font: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
+                          autoFocus
+                        />
+                      </label>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <Button variant="secondary" size="sm" onClick={() => { setShowPasteArea(false); setPasteText('') }}>Cancelar</Button>
+                        <Button variant="primary" size="sm" onClick={handlePasteEmails}>Agregar emails</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

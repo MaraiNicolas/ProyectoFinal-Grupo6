@@ -85,7 +85,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             return invitacion;
         }
 
-        public async Task<List<Invitacion>> ObtenerInvitaciones(DateTime? fecha, Guid? usuarioId = null)
+        public async Task<(List<Invitacion> Items, bool HasMore)> ObtenerInvitaciones(DateTime? desde, DateTime? hasta, Guid? usuarioId = null, int page = 1, int pageSize = 20)
         {
             var query = _context.Set<Invitacion>()
                 .Include(i => i.Usuario)
@@ -96,14 +96,19 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             if (usuarioId.HasValue)
                 query = query.Where(i => i.UsuarioId == usuarioId.Value);
 
-            if (fecha.HasValue)
-                query = query.Where(i => i.Fecha.Date == fecha.Value.Date);
+            if (desde.HasValue)
+                query = query.Where(i => i.Fecha >= desde.Value.Date);
 
-            var invitaciones = await query.OrderByDescending(i => i.Fecha).ToListAsync();
-            return invitaciones
+            if (hasta.HasValue)
+                query = query.Where(i => i.Fecha <= hasta.Value.Date);
+
+            var items = await query
                 .OrderByDescending(i => i.Fecha)
-                .ThenByDescending(i => i.HoraInicio)
-                .ToList();
+                .Skip((page - 1) * pageSize).Take(pageSize + 1)
+                .ToListAsync();
+            var hasMore = items.Count > pageSize;
+            if (hasMore) items = items.Take(pageSize).ToList();
+            return (items, hasMore);
         }
 
         public async Task<Invitacion?> ObtenerInvitacionPorId(Guid id)
@@ -136,7 +141,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                 {
                     var hikRequest = new HikReservaRequest
                     {
-                        VisitPurpose = cancelPurpose,
+                        VisitReasonDetail = cancelPurpose,
                         VisitorInfoList = new List<HikVisitorInfo>
                         {
                             new HikVisitorInfo
@@ -152,8 +157,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                         }
                     };
                     var cancelResult = await _hikCentral.CancelarReserva(iv.HikCentralReservationId!, hikRequest);
-                    if (cancelResult.Success && cancelResult.NewReservationId != null)
-                        iv.HikCentralReservationId = cancelResult.NewReservationId;
+                    if (cancelResult.Success)
+                        iv.HikCentralReservationId = null;
                 }
                 iv.EstadoFormulario = "Cancelado";
             }
@@ -246,7 +251,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
                 var hikRequest = new HikReservaRequest
                 {
-                    VisitPurpose = cancelPurpose,
+                    VisitReasonDetail = cancelPurpose,
                     VisitorInfoList = new List<HikVisitorInfo>
                     {
                         new HikVisitorInfo
@@ -294,7 +299,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             {
                 var hikRequest = new HikReservaRequest
                 {
-                    VisitPurpose = cancelPurpose,
+                    VisitReasonDetail = cancelPurpose,
                     VisitorInfoList = new List<HikVisitorInfo>
                     {
                         new HikVisitorInfo

@@ -42,6 +42,13 @@ function getDateRange(key) {
   }
 }
 
+function formatDateParam(d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export function InvitacionesPage() {
   const navigate = useNavigate()
   const [invitaciones, setInvitaciones] = useState([])
@@ -49,32 +56,35 @@ export function InvitacionesPage() {
   const [quickFilter, setQuickFilter] = useState('todas')
   const [customDate, setCustomDate] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
 
   useEffect(() => {
-    obtenerInvitaciones().then((data) => {
-      setInvitaciones(data || [])
+    setPage(1)
+  }, [quickFilter, customDate])
+
+  useEffect(() => {
+    setLoading(true)
+    let desde = undefined
+    let hasta = undefined
+
+    if (customDate) {
+      desde = customDate
+      hasta = customDate
+    } else {
+      const range = getDateRange(quickFilter)
+      if (range) {
+        desde = formatDateParam(range.desde)
+        hasta = formatDateParam(range.hasta)
+      }
+    }
+
+    obtenerInvitaciones(desde, hasta, page).then((res) => {
+      setInvitaciones(res.data || [])
+      setHasMore(res.hasMore)
       setLoading(false)
     })
-  }, [])
-
-  const filtered = (() => {
-    if (customDate) {
-      const selected = new Date(customDate)
-      selected.setHours(0, 0, 0, 0)
-      return invitaciones.filter((inv) => {
-        const fecha = new Date(inv.fecha)
-        fecha.setHours(0, 0, 0, 0)
-        return fecha.getTime() === selected.getTime()
-      })
-    }
-    const range = getDateRange(quickFilter)
-    if (!range) return invitaciones
-    return invitaciones.filter((inv) => {
-      const fecha = new Date(inv.fecha)
-      fecha.setHours(0, 0, 0, 0)
-      return fecha >= range.desde && fecha <= range.hasta
-    })
-  })()
+  }, [quickFilter, customDate, page])
 
   const handleDelete = async () => {
     if (!deleteConfirm) return
@@ -116,7 +126,7 @@ export function InvitacionesPage() {
       <section className="table-panel">
         {loading ? (
           <p className="empty-state">Cargando...</p>
-        ) : filtered.length === 0 ? (
+        ) : invitaciones.length === 0 ? (
           <p className="empty-state">No hay invitaciones.</p>
         ) : (
           <table className="visitors-table">
@@ -133,7 +143,7 @@ export function InvitacionesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inv) => (
+              {invitaciones.map((inv) => (
                 <tr
                   key={inv.guid}
                   style={{ cursor: 'pointer' }}
@@ -160,6 +170,11 @@ export function InvitacionesPage() {
             </tbody>
           </table>
         )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+          <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Pagina {page}</span>
+          <Button variant="secondary" size="sm" disabled={!hasMore} onClick={() => setPage((p) => p + 1)}>Siguiente</Button>
+        </div>
       </section>
       {deleteConfirm && (
         <div className="confirm-overlay" onClick={() => setDeleteConfirm(null)}>

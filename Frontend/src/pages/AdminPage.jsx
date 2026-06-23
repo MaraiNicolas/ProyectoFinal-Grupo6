@@ -94,6 +94,8 @@ export function AdminPage() {
 function AdminInvitaciones() {
   const [invitaciones, setInvitaciones] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
 
   const usuario = getUsuarioActual()
   const [search, setSearch] = useState('')
@@ -105,8 +107,13 @@ function AdminInvitaciones() {
   const { sortField, sortDir, onSort, sortFn } = useSort('fecha')
 
   useEffect(() => {
-    obtenerTodasInvitaciones().then((data) => { setInvitaciones(data || []); setLoading(false) })
-  }, [])
+    setPage(1)
+  }, [search, estado, desde, hasta, userFilter])
+
+  useEffect(() => {
+    setLoading(true)
+    obtenerTodasInvitaciones(desde || undefined, hasta || undefined, page).then((res) => { setInvitaciones(res.data || []); setHasMore(res.hasMore); setLoading(false) })
+  }, [desde, hasta, page])
 
   const filtered = useMemo(() => {
     let result = invitaciones
@@ -230,6 +237,11 @@ function AdminInvitaciones() {
             )}
           </tbody>
         </table>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+          <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Pagina {page}</span>
+          <Button variant="secondary" size="sm" disabled={!hasMore} onClick={() => setPage((p) => p + 1)}>Siguiente</Button>
+        </div>
       </section>
     </div>
   )
@@ -479,6 +491,8 @@ function AdminConfiguracion() {
 function AdminAuditLogs() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
 
   const [search, setSearch] = useState('')
   const [eventType, setEventType] = useState('')
@@ -488,8 +502,13 @@ function AdminAuditLogs() {
   const { sortField, sortDir, onSort, sortFn } = useSort('timestamp')
 
   useEffect(() => {
-    obtenerAuditLogs().then((data) => { setLogs(data || []); setLoading(false) })
-  }, [])
+    setPage(1)
+  }, [search, eventType, desde, hasta])
+
+  useEffect(() => {
+    setLoading(true)
+    obtenerAuditLogs(eventType || undefined, desde || undefined, hasta || undefined, page).then((res) => { setLogs(res.data || []); setHasMore(res.hasMore); setLoading(false) })
+  }, [eventType, desde, hasta, page])
 
   const eventTypes = useMemo(() => {
     const map = new Map()
@@ -607,6 +626,11 @@ function AdminAuditLogs() {
             )}
           </tbody>
         </table>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+          <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Pagina {page}</span>
+          <Button variant="secondary" size="sm" disabled={!hasMore} onClick={() => setPage((p) => p + 1)}>Siguiente</Button>
+        </div>
       </section>
     </div>
   )

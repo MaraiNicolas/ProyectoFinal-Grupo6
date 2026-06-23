@@ -10,7 +10,7 @@ Los empleados crean invitaciones, el sistema genera un link unico por visitante,
 ```
 Navegador → Frontend (React 19 + Vite) → Backend API (.NET 9)
                                               ├→ HikCentral (reservas, QR, acceso)
-                                              ├→ Finnegans GO (SSO, autenticacion)
+                                              ├→ SSO (autenticacion)
                                               ├→ SQLite (usuarios, invitaciones, visitantes, grupos)
                                               ├→ DynamoDB (logs de auditoria)
                                               └→ SMTP (notificaciones por email)
@@ -91,8 +91,8 @@ npm run dev
 - Configurable via SMTP (Gmail, Outlook, corporativo)
 - Mock disponible (logea a consola)
 
-### Autenticacion SSO (Finnegans GO)
-- Login via token de Finnegans GO
+### Autenticacion SSO
+- Login via token SSO
 - Auto-creacion de usuarios en primer login
 - Mock con tokens predefinidos para desarrollo
 
@@ -108,15 +108,4 @@ npm run dev
 
 ## Configuracion
 
-El sistema se configura via variables de entorno (`.env`):
-
-| Variable | Descripcion |
-|----------|------------|
-| `FINNEGANS_ENABLED` | Habilitar SSO con Finnegans |
-| `FINNEGANS_USE_MOCK` | Usar mock de SSO |
-| `HIKCENTRAL_USE_MOCK` | Usar mock de HikCentral |
-| `EMAIL_USE_MOCK` | Usar mock de email |
-| `AUDIT_USE_MOCK` | Usar mock de auditoria |
-| `APP_BASE_URL` | URL del frontend (para links en emails) |
-
-Ver `.env.example` para la lista completa con documentacion.
+El sistema se configura via variables de entorno. Ver `.env.example` para la lista completa con documentacion.

@@ -104,7 +104,6 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
             var items = await query
                 .OrderByDescending(i => i.Fecha)
-                .ThenByDescending(i => i.HoraInicio)
                 .Skip((page - 1) * pageSize).Take(pageSize + 1)
                 .ToListAsync();
             var hasMore = items.Count > pageSize;
@@ -142,7 +141,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                 {
                     var hikRequest = new HikReservaRequest
                     {
-                        VisitPurpose = cancelPurpose,
+                        VisitReasonDetail = cancelPurpose,
                         VisitorInfoList = new List<HikVisitorInfo>
                         {
                             new HikVisitorInfo
@@ -158,8 +157,8 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
                         }
                     };
                     var cancelResult = await _hikCentral.CancelarReserva(iv.HikCentralReservationId!, hikRequest);
-                    if (cancelResult.Success && cancelResult.NewReservationId != null)
-                        iv.HikCentralReservationId = cancelResult.NewReservationId;
+                    if (cancelResult.Success)
+                        iv.HikCentralReservationId = null;
                 }
                 iv.EstadoFormulario = "Cancelado";
             }
@@ -252,7 +251,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
 
                 var hikRequest = new HikReservaRequest
                 {
-                    VisitPurpose = cancelPurpose,
+                    VisitReasonDetail = cancelPurpose,
                     VisitorInfoList = new List<HikVisitorInfo>
                     {
                         new HikVisitorInfo
@@ -300,7 +299,7 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Invitaciones
             {
                 var hikRequest = new HikReservaRequest
                 {
-                    VisitPurpose = cancelPurpose,
+                    VisitReasonDetail = cancelPurpose,
                     VisitorInfoList = new List<HikVisitorInfo>
                     {
                         new HikVisitorInfo

@@ -10,12 +10,14 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
         private readonly ApplicationDbContext _context;
         private readonly IHikCentralService _hikCentral;
         private readonly IAuditLogService _auditLog;
+        private readonly IConfiguration _configuration;
 
-        public RegistroService(ApplicationDbContext context, IHikCentralService hikCentral, IAuditLogService auditLog)
+        public RegistroService(ApplicationDbContext context, IHikCentralService hikCentral, IAuditLogService auditLog, IConfiguration configuration)
         {
             _context = context;
             _auditLog = auditLog;
             _hikCentral = hikCentral;
+            _configuration = configuration;
         }
 
         public async Task<RegistroResponse?> ObtenerRegistro(string token)
@@ -94,11 +96,15 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
                 return BuildResponse(iv, "Completado");
 
             // Crear reserva en HikCentral PRIMERO — si falla, no completamos el registro
+            // Usa v2/appointment para obtener access level automaticamente
+            var accessLevelId = _configuration.GetValue<int>("HikCentral:AccessLevelId", 7);
+            var accessLevelName = _configuration["HikCentral:AccessLevelName"] ?? "Visitantes";
+
             var hikRequest = new HikReservaRequest
             {
-                VisitStartTime = (invitacion.Fecha.Date + invitacion.HoraInicio - TimeSpan.FromMinutes(invitacion.BufferMinutos)).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                VisitEndTime = (invitacion.Fecha.Date + invitacion.HoraFin + TimeSpan.FromMinutes(invitacion.BufferMinutos)).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                VisitPurpose = invitacion.Motivo ?? "Visita",
+                AppointStartTime = (invitacion.Fecha.Date + invitacion.HoraInicio - TimeSpan.FromMinutes(invitacion.BufferMinutos)).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                AppointEndTime = (invitacion.Fecha.Date + invitacion.HoraFin + TimeSpan.FromMinutes(invitacion.BufferMinutos)).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                VisitReasonDetail = invitacion.Motivo ?? "Visita",
                 VisitorInfoList = new List<HikVisitorInfo>
                 {
                     new HikVisitorInfo
@@ -110,7 +116,22 @@ namespace ProyectoFinal_Grupo6.Api.Funcionalidades.Registro
                             Email = iv.EmailVisitante,
                             PhoneNum = request.Telefono,
                             CertificateType = request.TipoDocumento,
-                            CertificateNum = request.NumeroDocumento
+                            CertificateNum = request.NumeroDocumento,
+                            VisitorGroupName = "Visitors"
+                        }
+                    }
+                },
+                AccessInfo = new HikAccessInfo
+                {
+                    AccessLevelList = new List<HikAccessLevelWrapper>
+                    {
+                        new HikAccessLevelWrapper
+                        {
+                            AccessLevel = new HikAccessLevel
+                            {
+                                Id = accessLevelId,
+                                BaseInfo = new HikAccessLevelBaseInfo { Name = accessLevelName }
+                            }
                         }
                     }
                 }

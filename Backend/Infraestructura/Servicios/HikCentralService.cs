@@ -18,8 +18,8 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
         private readonly string _baseUrl;
         private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-        private const string ENDPOINT_REGISTERMENT = "/artemis/api/visitor/v1/registerment";
-        private const string ENDPOINT_REGISTERMENT_UPDATE = "/artemis/api/visitor/v1/registerment/update";
+        private const string ENDPOINT_APPOINTMENT_V2 = "/artemis/api/visitor/v2/appointment";
+        private const string ENDPOINT_DELETE = "/artemis/api/visitor/v1/appointment/single/delete";
         private const string ENDPOINT_VERSION = "/artemis/api/common/v1/version";
 
         public HikCentralService(HttpClient httpClient, IConfiguration configuration, ILogger<HikCentralService> logger)
@@ -45,7 +45,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 
         public async Task<HikReservaResponse> CrearReserva(HikReservaRequest request)
         {
-            var response = await CallApi(ENDPOINT_REGISTERMENT, request);
+            var response = await CallApi(ENDPOINT_APPOINTMENT_V2, request);
 
             if (response == null)
             {
@@ -81,21 +81,11 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
 
         public async Task<HikCancelacionResponse> CancelarReserva(string appointRecordId, HikReservaRequest requestOriginal)
         {
-            var pastDate = DateTime.UtcNow.AddDays(-2).Date;
-            var updateBody = new
-            {
-                AppointRecordId = appointRecordId,
-                VisitStartTime = $"{pastDate:yyyy-MM-dd}T00:00:00-03:00",
-                VisitEndTime = $"{pastDate:yyyy-MM-dd}T01:00:00-03:00",
-                VisitPurposeType = 0,
-                VisitPurpose = $"CANCELADO - {requestOriginal.VisitPurpose}",
-                VisitorInfoList = requestOriginal.VisitorInfoList
-            };
+            var deleteBody = new { AppointRecordId = appointRecordId };
 
-            _logger.LogInformation("CancelarReserva: appointRecordId={Id}, body={Body}",
-                appointRecordId, System.Text.Json.JsonSerializer.Serialize(updateBody, _jsonOptions));
+            _logger.LogInformation("CancelarReserva (delete): appointRecordId={Id}", appointRecordId);
 
-            var response = await CallApi(ENDPOINT_REGISTERMENT_UPDATE, updateBody);
+            var response = await CallApi(ENDPOINT_DELETE, deleteBody);
 
             if (response == null)
             {
@@ -107,8 +97,7 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
             }
 
             var root = response.RootElement;
-            var responseText = root.ToString();
-            _logger.LogInformation("CancelarReserva response: {Response}", responseText);
+            _logger.LogInformation("CancelarReserva response: {Response}", root.ToString());
 
             var code = root.TryGetProperty("code", out var codeProp) ? codeProp.GetString() : null;
 
@@ -123,13 +112,11 @@ namespace ProyectoFinal_Grupo6.Api.Infraestructura.Servicios
                 };
             }
 
-            var data = root.GetProperty("data");
-            var newId = data.TryGetProperty("appointRecordId", out var rid) ? rid.GetString() : null;
-            _logger.LogInformation("CancelarReserva exitosa: newId={NewId}", newId);
+            _logger.LogInformation("CancelarReserva exitosa: reserva {Id} eliminada", appointRecordId);
             return new HikCancelacionResponse
             {
                 Success = true,
-                NewReservationId = newId
+                NewReservationId = null
             };
         }
 

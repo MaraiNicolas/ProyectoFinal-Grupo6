@@ -25,15 +25,39 @@ namespace ProyectoFinal_Grupo6.Api.Dominio.Interfaces.Servicios
         public string? CertificateNum { get; set; }
         public string? Organization { get; set; }
         public string? Remark { get; set; }
+        public string? VisitorGroupName { get; set; }
+        public HikAccessInfo? AccessInfo { get; set; }
+    }
+
+    public class HikAccessInfo
+    {
+        public List<HikAccessLevelWrapper> AccessLevelList { get; set; } = new();
+    }
+
+    public class HikAccessLevelWrapper
+    {
+        public HikAccessLevel AccessLevel { get; set; } = new();
+    }
+
+    public class HikAccessLevel
+    {
+        public int Id { get; set; }
+        public HikAccessLevelBaseInfo? BaseInfo { get; set; }
+    }
+
+    public class HikAccessLevelBaseInfo
+    {
+        public string Name { get; set; } = string.Empty;
     }
 
     public class HikReservaRequest
     {
-        public string VisitStartTime { get; set; } = string.Empty;  // ISO-8601
-        public string VisitEndTime { get; set; } = string.Empty;    // ISO-8601
-        public int VisitPurposeType { get; set; } = 0;
-        public string VisitPurpose { get; set; } = string.Empty;
+        public string AppointStartTime { get; set; } = string.Empty;  // ISO-8601
+        public string AppointEndTime { get; set; } = string.Empty;    // ISO-8601
+        public int VisitReasonType { get; set; } = 0;
+        public string? VisitReasonDetail { get; set; }
         public List<HikVisitorInfo> VisitorInfoList { get; set; } = new();
+        public HikAccessInfo? AccessInfo { get; set; }
     }
 
     public class HikVisitorInfo

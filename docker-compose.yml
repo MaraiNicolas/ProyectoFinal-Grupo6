@@ -36,6 +36,8 @@ services:
       HikCentral__BaseUrl: "${HIKCENTRAL_BASE_URL}"
       HikCentral__PartnerKey: "${HIKCENTRAL_PARTNER_KEY}"
       HikCentral__PartnerSecret: "${HIKCENTRAL_PARTNER_SECRET}"
+      HikCentral__AccessLevelId: "${HIKCENTRAL_ACCESS_LEVEL_ID:-7}"
+      HikCentral__AccessLevelName: "${HIKCENTRAL_ACCESS_LEVEL_NAME:-Visitantes}"
       AuditLog__UseMock: "${AUDIT_USE_MOCK:-true}"
       Email__UseMock: "${EMAIL_USE_MOCK:-true}"
       Email__Host: "${EMAIL_HOST}"
